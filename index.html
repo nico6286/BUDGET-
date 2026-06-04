@@ -13,6 +13,11 @@
             --text-color: #e0e0e0;
             --error-color: #cf6679;
             --border-color: #333333;
+            --accent-orange: #ffb74d;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
@@ -34,6 +39,7 @@
         h1, h2 {
             text-align: center;
             color: var(--primary-color);
+            margin-top: 10px;
         }
 
         .card {
@@ -43,6 +49,19 @@
             padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        /* Balance et Virement */
+        .balance-box {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: #1a237e;
+            border: 1px solid #303f9f;
+            color: #fff;
+            margin-bottom: 20px;
         }
 
         .form-group {
@@ -59,7 +78,6 @@
         input, select {
             width: 100%;
             padding: 12px;
-            box-sizing: border-box;
             background-color: #2c2c2c;
             border: 1px solid var(--border-color);
             border-radius: 6px;
@@ -76,10 +94,12 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            user-select: none;
         }
 
         .checkbox-group input {
             width: auto;
+            transform: scale(1.2);
         }
 
         button {
@@ -106,6 +126,12 @@
             margin-top: 10px;
         }
 
+        .btn-cancel {
+            background-color: #333;
+            color: #fff;
+            margin-top: 8px;
+        }
+
         .status-msg {
             text-align: center;
             font-weight: bold;
@@ -116,7 +142,7 @@
         /* Liste des dépenses */
         .depense-item {
             border-bottom: 1px solid var(--border-color);
-            padding: 12px 0;
+            padding: 14px 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -129,21 +155,56 @@
         .depense-info {
             display: flex;
             flex-direction: column;
+            max-width: 70%;
         }
 
         .depense-titre {
             font-weight: bold;
+            font-size: 1.05rem;
         }
 
         .depense-meta {
             font-size: 0.8rem;
             color: #888;
+            margin-top: 4px;
+        }
+
+        .badge-perso {
+            background-color: #5d4037;
+            color: #ffb74d;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .depense-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
         }
 
         .depense-montant {
             font-weight: bold;
             color: var(--secondary-color);
+            font-size: 1.1rem;
         }
+
+        .actions-links {
+            font-size: 0.8rem;
+        }
+
+        .actions-links span {
+            cursor: pointer;
+            margin-left: 10px;
+            text-decoration: underline;
+        }
+
+        .edit-link { color: var(--accent-orange); }
+        .delete-link { color: var(--error-color); }
     </style>
 </head>
 <body>
@@ -151,11 +212,18 @@
     <div class="container">
         <h1>Budget Couple</h1>
         
+        <div id="balanceBox" class="balance-box">
+            Calcul du virement en cours...
+        </div>
+        
         <div class="card">
+            <h3 id="formTitle" style="margin-top:0; color: var(--secondary-color);">Ajouter une dépense</h3>
             <form id="budgetForm">
+                <input type="hidden" id="editId">
+
                 <div class="form-group">
                     <label for="titre">Intitulé de la dépense</label>
-                    <input type="text" id="titre" required placeholder="Ex: Courses Carrefour">
+                    <input type="text" id="titre" required placeholder="Ex: Essence, Courses Carrefour...">
                 </div>
                 
                 <div class="form-group">
@@ -166,56 +234,75 @@
                 <div class="form-group">
                     <label for="payeur">Qui a payé ?</label>
                     <select id="payeur" required>
-                        <option value="Partenaire 1">Partenaire 1</option>
-                        <option value="Partenaire 2">Partenaire 2</option>
+                        <option value="Nicolas">Nicolas</option>
+                        <option value="Pauline">Pauline</option>
                     </select>
                 </div>
 
                 <div class="form-group checkbox-group">
                     <input type="checkbox" id="noSplit">
-                    <label for="noSplit">Ne pas diviser (Dépense perso)</label>
+                    <label for="noSplit">Ne pas diviser (Dépense 100% perso)</label>
                 </div>
 
-                <button type="submit">Ajouter la dépense</button>
+                <button type="submit" id="submitBtn">Ajouter la dépense</button>
+                <button type="button" id="cancelEditBtn" class="btn-cancel" style="display: none;" onclick="resetForm()">Annuler la modification</button>
             </form>
             <div id="statusMsg" class="status-msg"></div>
         </div>
 
         <h2>Dernières Dépenses</h2>
-        <div class="card" id="historiqueCard">
-            <button class="btn-secondary" onclick="chargerDepenses()">Rafraîchir l'historique</button>
+        <div class="card">
+            <button class="btn-secondary" onclick="chargerDepenses()">Rafraîchir les données</button>
             <div id="listeDepenses" style="margin-top: 15px;">
                 </div>
         </div>
     </div>
 
     <script>
-        // ==========================================
-        // ETAPE 4 : COLLER VOTRE URL DE DEPLOIEMENT ICI
-        // ==========================================
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2DVPU1se-fIUiNXFO2DMuxxxFv6qpFCE8AbmBldh6-PRhAHD2s6d-35JVJiCnWN8t/exec";
+        // =======================================================
+        // METTEZ VOTRE NOUVELLE URL DE DÉPLOIEMENT APPS SCRIPT ICI
+        // =======================================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
 
-        // Générateur d'ID unique simple
+        // Stockage local temporaire des données récupérées du Sheet pour l'édition rapide
+        let localData = [];
+
+        // Générateur d'ID unique
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-        // Envoi des données au Google Sheet
+        // Formater proprement la date provenant de Sheets
+        function formaterDate(dateString) {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) return dateString; // Si c'est déjà du texte au format fr
+            return d.toLocaleDateString('fr-FR');
+        }
+
+        // Soumission du Formulaire (Ajout ou Modification)
         document.getElementById('budgetForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
             const msgDiv = document.getElementById('statusMsg');
+            const editId = document.getElementById('editId').value;
+            
             msgDiv.style.color = 'var(--secondary-color)';
-            msgDiv.innerText = "Envoi en cours...";
+            msgDiv.innerText = "Synchronisation avec Google Sheets...";
 
             const payload = {
-                action: "addData",
-                id: generateID(),
+                id: editId ? editId : generateID(),
                 titre: document.getElementById('titre').value,
                 montant: parseFloat(document.getElementById('montant').value),
                 payeur: document.getElementById('payeur').value,
-                date: new Date().toLocaleDateString('fr-FR'),
-                statut: "En attente",
                 noSplit: document.getElementById('noSplit').checked ? "Oui" : "Non"
             };
+
+            if (editId) {
+                payload.action = "updateData"; // Mode modification
+            } else {
+                payload.action = "addData"; // Mode ajout
+                payload.date = new Date().toLocaleDateString('fr-FR');
+                payload.statut = "En attente";
+            }
 
             fetch(SCRIPT_URL, {
                 method: "POST",
@@ -224,9 +311,9 @@
             .then(response => response.json())
             .then(data => {
                 if(data.result === "success") {
-                    msgDiv.innerText = "Dépense enregistrée !";
-                    document.getElementById('budgetForm').reset();
-                    chargerDepenses(); // Met à jour la liste
+                    msgDiv.innerText = editId ? "Dépense modifiée avec succès !" : "Dépense enregistrée !";
+                    resetForm();
+                    chargerDepenses();
                 } else {
                     msgDiv.style.color = 'var(--error-color)';
                     msgDiv.innerText = "Erreur : " + data.error;
@@ -234,41 +321,79 @@
             })
             .catch(error => {
                 msgDiv.style.color = 'var(--error-color)';
-                msgDiv.innerText = "Erreur de connexion.";
+                msgDiv.innerText = "Erreur réseau/CORS.";
                 console.error(error);
             });
         });
 
-        // Récupération des données depuis le Google Sheet
+        // Charger et Calculer les Dépenses (Matière principale)
         function chargerDepenses() {
             const liste = document.getElementById('listeDepenses');
             liste.innerHTML = "<p style='text-align:center; color:#888;'>Chargement...</p>";
 
-            fetch(SCRIPT_URL + "?action=getData", { // Utilisation d'un paramètre GET pour l'action de lecture globale
+            fetch(SCRIPT_URL, {
                 method: "POST",
                 body: JSON.stringify({ action: "getData" })
             })
             .then(response => response.json())
             .then(res => {
                 if(res.result === "success" && res.data.length > 0) {
+                    localData = res.data; // Sauvegarde locale pour l'édition
                     liste.innerHTML = "";
-                    // Afficher les 10 dernières dépenses (ordre inverse)
-                    const dernièresDepenses = res.data.reverse().slice(0, 10);
                     
-                    dernièresDepenses.forEach(item => {
+                    let totalNicolas = 0;
+                    let totalPauline = 0;
+
+                    // On parcourt toutes les lignes pour calculer le virement de équilibrage
+                    res.data.forEach(item => {
+                        // Tolérance de casse : s'adapte si les colonnes ont des minuscules/majuscules dans le sheet
+                        const montant = parseFloat(item.Montant || item.montant || 0);
+                        const payeur = item.Payeur || item.payeur;
+                        const noSplit = item.NoSplit || item.nosplit || item.NoSplit;
+
+                        // Seules les dépenses partagées (NoSplit !== "Oui") entrent dans le calcul du virement commun
+                        if (noSplit !== "Oui" && noSplit !== "oui") {
+                            if (payeur === "Nicolas") totalNicolas += montant;
+                            if (payeur === "Pauline") totalPauline += montant;
+                        }
+                    });
+
+                    // Calcul du virement d'équilibre
+                    calculerVirement(totalNicolas, totalPauline);
+
+                    // Affichage des 15 dernières entrées (de la plus récente à la plus ancienne)
+                    const copieInversee = [...res.data].reverse();
+                    copieInversee.forEach(item => {
+                        const id = item.ID || item.id;
+                        const titre = item.Titre || item.titre;
+                        const montant = parseFloat(item.Montant || item.montant || 0);
+                        const payeur = item.Payeur || item.payeur;
+                        const dateRaw = item.Date || item.date;
+                        const noSplit = item.NoSplit || item.nosplit;
+
                         const div = document.createElement('div');
                         div.className = 'depense-item';
                         div.innerHTML = `
                             <div class="depense-info">
-                                <span class="depense-titre">${item.Titre}</span>
-                                <span class="depense-meta">${item.Date} • Par ${item.Payeur} ${item.NoSplit === "Oui" ? '(Perso)' : ''}</span>
+                                <span class="depense-titre">
+                                    ${titre} 
+                                    ${(noSplit === "Oui" || noSplit === "oui") ? '<span class="badge-perso">Perso</span>' : ''}
+                                </span>
+                                <span class="depense-meta">${formaterDate(dateRaw)} • Payé par <strong>${payeur}</strong></span>
                             </div>
-                            <div class="depense-montant">${item.Montant} €</div>
+                            <div class="depense-right">
+                                <span class="depense-montant">${montant.toFixed(2)} €</span>
+                                <div class="actions-links">
+                                    <span class="edit-link" onclick="preparerEdition('${id}')">Modifier</span>
+                                    <span class="delete-link" onclick="supprimerDepense('${id}')">Suppr.</span>
+                                </div>
+                            </div>
                         `;
                         liste.appendChild(div);
                     });
                 } else {
                     liste.innerHTML = "<p style='text-align:center; color:#888;'>Aucune dépense trouvée.</p>";
+                    document.getElementById('balanceBox').innerText = "Aucune dépense partagée. Équilibre parfait !";
                 }
             })
             .catch(error => {
@@ -277,7 +402,84 @@
             });
         }
 
-        // Charger les données au démarrage de l'application
+        // Calcule qui doit de l'argent à qui
+        function calculerVirement(nicolasTotal, paulineTotal) {
+            const box = document.getElementById('balanceBox');
+            const diff = nicolasTotal - paulineTotal;
+            
+            if (diff === 0) {
+                box.style.backgroundColor = "#1b5e20"; // Vert
+                box.innerText = "Équilibre parfait : Personne ne doit rien !";
+            } else if (diff > 0) {
+                // Nicolas a payé plus que Pauline
+                const virement = diff / 2;
+                box.style.backgroundColor = "#e65100"; // Orange / Alerte douce
+                box.innerText = `Pauline doit faire un virement de ${virement.toFixed(2)} € à Nicolas`;
+            } else {
+                // Pauline a payé plus que Nicolas
+                const virement = Math.abs(diff) / 2;
+                box.style.backgroundColor = "#e65100";
+                box.innerText = `Nicolas doit faire un virement de ${virement.toFixed(2)} € à Pauline`;
+            }
+        }
+
+        // Passer le formulaire en mode Édition
+        function preparerEdition(id) {
+            const item = localData.find(d => (d.ID || d.id) === id);
+            if (!item) return;
+
+            document.getElementById('formTitle').innerText = "Modifier la dépense";
+            document.getElementById('editId').value = id;
+            document.getElementById('titre').value = item.Titre || item.titre;
+            document.getElementById('montant').value = item.Montant || item.montant;
+            document.getElementById('payeur').value = item.Payeur || item.payeur;
+            
+            const noSplitVal = item.NoSplit || item.nosplit;
+            document.getElementById('noSplit').checked = (noSplitVal === "Oui" || noSplitVal === "oui");
+
+            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
+            document.getElementById('cancelEditBtn').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Supprimer une ligne
+        function supprimerDepense(id) {
+            if (!confirm("Voulez-vous vraiment supprimer cette dépense ?")) return;
+
+            const msgDiv = document.getElementById('statusMsg');
+            msgDiv.style.color = 'var(--accent-orange)';
+            msgDiv.innerText = "Suppression dans le Sheet...";
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify({ action: "deleteData", id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.result === "success") {
+                    msgDiv.style.color = 'var(--secondary-color)';
+                    msgDiv.innerText = "Dépense supprimée !";
+                    chargerDepenses();
+                } else {
+                    msgDiv.style.color = 'var(--error-color)';
+                    msgDiv.innerText = "Erreur : " + data.error;
+                }
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        }
+
+        // Réinitialiser le formulaire
+        function resetForm() {
+            document.getElementById('formTitle').innerText = "Ajouter une dépense";
+            document.getElementById('editId').value = "";
+            document.getElementById('budgetForm').reset();
+            document.getElementById('submitBtn').innerText = "Ajouter la dépense";
+            document.getElementById('cancelEditBtn').style.display = "none";
+        }
+
+        // Lancement au chargement de la page
         window.onload = chargerDepenses;
     </script>
 </body>

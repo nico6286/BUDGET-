@@ -14,14 +14,13 @@
             --error-color: #cf6679;
             --border-color: #333333;
             --accent-orange: #ffb74d;
+            --success-color: #1b5e20;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
@@ -31,16 +30,8 @@
             align-items: center;
         }
 
-        .container {
-            width: 100%;
-            max-width: 500px;
-        }
-
-        h1, h2 {
-            text-align: center;
-            color: var(--primary-color);
-            margin-top: 10px;
-        }
+        .container { width: 100%; max-width: 500px; }
+        h1, h2 { text-align: center; color: var(--primary-color); margin-top: 10px; }
 
         .card {
             background-color: var(--surface-color);
@@ -51,7 +42,6 @@
             box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
-        /* Balance et Virement */
         .balance-box {
             text-align: center;
             font-size: 1.1rem;
@@ -61,148 +51,70 @@
             background-color: #1a237e;
             border: 1px solid #303f9f;
             color: #fff;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
         }
 
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 5px;
+        .virement-status {
+            text-align: center;
             font-size: 0.9rem;
-            color: #aaa;
+            margin-bottom: 15px;
+            color: var(--accent-orange);
+            font-weight: bold;
         }
 
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-size: 0.9rem; color: #aaa; }
         input, select {
-            width: 100%;
-            padding: 12px;
-            background-color: #2c2c2c;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
-            color: var(--text-color);
-            font-size: 1rem;
+            width: 100%; padding: 12px; background-color: #2c2c2c;
+            border: 1px solid var(--border-color); border-radius: 6px;
+            color: var(--text-color); font-size: 1rem;
         }
-
-        input:focus, select:focus {
-            outline: none;
-            border-color: var(--primary-color);
-        }
+        input:focus, select:focus { outline: none; border-color: var(--primary-color); }
 
         .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            user-select: none;
+            display: flex; align-items: center; gap: 10px; user-select: none; margin-top: 10px;
         }
-
-        .checkbox-group input {
-            width: auto;
-            transform: scale(1.2);
-        }
+        .checkbox-group input { width: auto; transform: scale(1.3); cursor: pointer; }
 
         button {
-            width: 100%;
-            padding: 14px;
-            background-color: var(--primary-color);
-            border: none;
-            border-radius: 6px;
-            color: #121212;
-            font-size: 1rem;
-            font-weight: bold;
-            cursor: pointer;
-            transition: background 0.2s;
+            width: 100%; padding: 14px; background-color: var(--primary-color);
+            border: none; border-radius: 6px; color: #121212;
+            font-size: 1rem; font-weight: bold; cursor: pointer; transition: background 0.2s;
         }
-
-        button:active {
-            background-color: #9a67ea;
+        button:active { background-color: #9a67ea; }
+        .btn-secondary { background-color: transparent; border: 1px solid var(--secondary-color); color: var(--secondary-color); margin-top: 10px; }
+        .btn-success { background-color: var(--success-color); color: white; margin-top: 5px; border: 1px solid #2e7d32; }
+        .btn-cancel { background-color: #333; color: #fff; margin-top: 8px; }
+        
+        /* Style du nouveau bouton de pré-remplissage */
+        .btn-quick { 
+            background-color: #263238; border: 1px dashed var(--accent-orange); 
+            color: var(--accent-orange); padding: 8px; font-size: 0.85rem; 
+            margin-bottom: 15px; border-radius: 6px;
         }
+        .btn-quick:active { background-color: #37474f; }
 
-        .btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--secondary-color);
-            color: var(--secondary-color);
-            margin-top: 10px;
-        }
+        .status-msg { text-align: center; font-weight: bold; margin-top: 10px; min-height: 24px; }
 
-        .btn-cancel {
-            background-color: #333;
-            color: #fff;
-            margin-top: 8px;
-        }
-
-        .status-msg {
-            text-align: center;
-            font-weight: bold;
-            margin-top: 10px;
-            min-height: 24px;
-        }
-
-        /* Liste des dépenses */
         .depense-item {
-            border-bottom: 1px solid var(--border-color);
-            padding: 14px 0;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-bottom: 1px solid var(--border-color); padding: 14px 0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .depense-item:last-child { border-bottom: none; }
+        .depense-info { display: flex; flex-direction: column; max-width: 70%; }
+        .depense-titre { font-weight: bold; font-size: 1.05rem; }
+        .depense-meta { font-size: 0.8rem; color: #888; margin-top: 4px; }
+        
+        .badge-facture {
+            background-color: #311b92; color: #b388ff; padding: 2px 6px;
+            border-radius: 4px; font-size: 0.7rem; font-weight: bold; margin-left: 5px;
         }
 
-        .depense-item:last-child {
-            border-bottom: none;
-        }
-
-        .depense-info {
-            display: flex;
-            flex-direction: column;
-            max-width: 70%;
-        }
-
-        .depense-titre {
-            font-weight: bold;
-            font-size: 1.05rem;
-        }
-
-        .depense-meta {
-            font-size: 0.8rem;
-            color: #888;
-            margin-top: 4px;
-        }
-
-        .badge-perso {
-            background-color: #5d4037;
-            color: #ffb74d;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-size: 0.7rem;
-            font-weight: bold;
-            margin-left: 5px;
-        }
-
-        .depense-right {
-            text-align: right;
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 8px;
-        }
-
-        .depense-montant {
-            font-weight: bold;
-            color: var(--secondary-color);
-            font-size: 1.1rem;
-        }
-
-        .actions-links {
-            font-size: 0.8rem;
-        }
-
-        .actions-links span {
-            cursor: pointer;
-            margin-left: 10px;
-            text-decoration: underline;
-        }
-
+        .depense-right { text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+        .depense-montant { font-weight: bold; color: var(--secondary-color); font-size: 1.1rem; }
+        
+        .actions-links { font-size: 0.8rem; }
+        .actions-links span { cursor: pointer; margin-left: 10px; text-decoration: underline; }
         .edit-link { color: var(--accent-orange); }
         .delete-link { color: var(--error-color); }
     </style>
@@ -212,18 +124,32 @@
     <div class="container">
         <h1>Budget Couple</h1>
         
-        <div id="balanceBox" class="balance-box">
-            Calcul du virement en cours...
+        <!-- Sélection du mois de visualisation globale -->
+        <div class="card" style="padding: 15px; margin-bottom: 15px;">
+            <label for="filtreMois" style="font-weight: bold; color: var(--primary-color);">Mois à calculer / consulter :</label>
+            <input type="text" id="filtreMois" placeholder="Ex: 05/2026" style="text-align: center; font-weight: bold; font-size: 1.1rem;" maxlength="7">
         </div>
+
+        <!-- Module d'Équilibre Financier -->
+        <div id="balanceBox" class="balance-box">Calcul en cours...</div>
+        <div id="virementStatus" class="virement-status"></div>
+        <button id="btnMarquerFait" class="btn-success" style="display:none;" onclick="marquerVirementFait()">Marquer le virement comme FAIT</button>
         
+        <div style="margin-bottom: 20px;"></div>
+
+        <!-- Formulaire d'ajout / Édition -->
         <div class="card">
-            <h3 id="formTitle" style="margin-top:0; color: var(--secondary-color);">Ajouter une dépense</h3>
+            <h3 id="formTitle" style="margin-top:0; margin-bottom: 10px; color: var(--secondary-color);">Ajouter une ligne</h3>
+            
+            <!-- Nouveau bouton d'automatisation de début de mois -->
+            <button type="button" class="btn-quick" onclick="preRemplirFacture()">⚡ Pré-remplir Facture Mensuelle</button>
+
             <form id="budgetForm">
                 <input type="hidden" id="editId">
 
                 <div class="form-group">
                     <label for="titre">Intitulé de la dépense</label>
-                    <input type="text" id="titre" required placeholder="Ex: Essence, Courses Carrefour...">
+                    <input type="text" id="titre" required placeholder="Ex: Facture, Courses, Café, Train...">
                 </div>
                 
                 <div class="form-group">
@@ -232,12 +158,12 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="date">Date de la dépense</label>
-                    <input type="date" id="date" required>
+                    <label for="dateMois">Mois de la dépense (MM/AAAA)</label>
+                    <input type="text" id="dateMois" required placeholder="Ex: 05/2026 (ou tapez 0526)" maxlength="7">
                 </div>
                 
                 <div class="form-group">
-                    <label for="payeur">Qui a payé ?</label>
+                    <label for="payeur">Qui a payé / Qui possède la facture ?</label>
                     <select id="payeur" required>
                         <option value="Nicolas">Nicolas</option>
                         <option value="Pauline">Pauline</option>
@@ -245,76 +171,91 @@
                 </div>
 
                 <div class="form-group checkbox-group">
-                    <input type="checkbox" id="noSplit">
-                    <label for="noSplit">Ne pas diviser (Dépense 100% perso)</label>
+                    <input type="checkbox" id="isFacture">
+                    <label for="isFacture"><strong>Facture fixe (100% à charge du conjoint)</strong></label>
                 </div>
 
-                <button type="submit" id="submitBtn">Ajouter la dépense</button>
+                <button type="submit" id="submitBtn" style="margin-top: 15px;">Enregistrer</button>
                 <button type="button" id="cancelEditBtn" class="btn-cancel" style="display: none;" onclick="resetForm()">Annuler la modification</button>
             </form>
             <div id="statusMsg" class="status-msg"></div>
         </div>
 
-        <h2>Dernières Dépenses</h2>
+        <!-- Historique du mois filtré -->
+        <h2>Dépenses du mois sélectionné</h2>
         <div class="card">
             <button class="btn-secondary" onclick="chargerDepenses()">Rafraîchir les données</button>
-            <div id="listeDepenses" style="margin-top: 15px;">
-                </div>
+            <div id="listeDepenses" style="margin-top: 15px;"></div>
         </div>
     </div>
 
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
-
         let localData = [];
 
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-        // Met la date du jour par défaut dans le calendrier
-        function initDateInput() {
-            const aujourdhui = new Date().toISOString().split('T')[0];
-            document.getElementById('date').value = aujourdhui;
+        // Formate automatiquement la saisie 'MMAAAA' en 'MM/AAAA'
+        function appliquerMasqueMois(inputElement) {
+            inputElement.addEventListener('input', function(e) {
+                let v = e.target.value.replace(/\D/g, '');
+                if (v.length === 4) {
+                    let mois = v.substr(0, 2);
+                    let annee = v.substr(2, 2);
+                    let anneeComplete = parseInt(annee) < 50 ? '20' + annee : '19' + annee;
+                    e.target.value = mois + '/' + anneeComplete;
+                }
+            });
+            inputElement.addEventListener('change', function(e) {
+                let v = e.target.value;
+                if(v.length === 6 && !v.includes('/')) {
+                     e.target.value = v.substr(0,2) + '/' + v.substr(2,4);
+                }
+            });
         }
 
-        function formaterDate(dateString) {
-            if (!dateString) return '';
-            const d = new Date(dateString);
-            if (isNaN(d.getTime())) return dateString;
-            return d.toLocaleDateString('fr-FR');
-        }
+        const filtreMoisInput = document.getElementById('filtreMois');
+        const dateMoisInput = document.getElementById('dateMois');
+        appliquerMasqueMois(filtreMoisInput);
+        appliquerMasqueMois(dateMoisInput);
 
-        // Convertit une date fr (JJ/MM/AAAA) ou ISO en format "AAAA-MM-JJ" pour l'input HTML
-        function formaterPourInputDate(dateString) {
-            if (!dateString) return '';
-            const d = new Date(dateString);
-            if (isNaN(d.getTime())) {
-                const parts = dateString.split('/');
-                if(parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
-                return '';
-            }
-            return d.toISOString().split('T')[0];
+        // Par défaut, cible le mois en cours
+        const mActuel = (new Date().getMonth() + 1).toString().padStart(2, '0');
+        const aActuel = new Date().getFullYear();
+        filtreMoisInput.value = `${mActuel}/${aActuel}`;
+        dateMoisInput.value = `${mActuel}/${aActuel}`;
+
+        filtreMoisInput.addEventListener('change', chargerDepenses);
+
+        // Fonction pour pré-remplir l'entrée facture récurrente
+        function preRemplirFacture() {
+            document.getElementById('titre').value = "Facture";
+            document.getElementById('montant').value = "959.21"; // Montant habituel par défaut
+            document.getElementById('dateMois').value = filtreMoisInput.value; // Reprend le mois affiché en haut
+            document.getElementById('payeur').value = "Pauline";
+            document.getElementById('isFacture').checked = true;
+            
+            // Met le focus directement sur le montant pour pouvoir le modifier facilement s'il y a un réajustement
+            const montantInput = document.getElementById('montant');
+            montantInput.focus();
+            montantInput.select();
         }
 
         document.getElementById('budgetForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            
             const msgDiv = document.getElementById('statusMsg');
             const editId = document.getElementById('editId').value;
             
             msgDiv.style.color = 'var(--secondary-color)';
             msgDiv.innerText = "Synchronisation avec Google Sheets...";
 
-            // Récupère et formate la date sélectionnée en format FR (JJ/MM/AAAA)
-            const dateSaisie = new Date(document.getElementById('date').value);
-            const dateFormatee = dateSaisie.toLocaleDateString('fr-FR');
-
             const payload = {
                 id: editId ? editId : generateID(),
                 titre: document.getElementById('titre').value,
                 montant: parseFloat(document.getElementById('montant').value),
                 payeur: document.getElementById('payeur').value,
-                date: dateFormatee, // Utilise la date choisie
-                noSplit: document.getElementById('noSplit').checked ? "Oui" : "Non"
+                date: document.getElementById('dateMois').value,
+                noSplit: document.getElementById('isFacture').checked ? "Oui" : "Non"
             };
 
             if (editId) {
@@ -324,14 +265,11 @@
                 payload.statut = "En attente";
             }
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify(payload)
-            })
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
             .then(response => response.json())
             .then(data => {
                 if(data.result === "success") {
-                    msgDiv.innerText = editId ? "Dépense modifiée avec succès !" : "Dépense enregistrée !";
+                    msgDiv.innerText = "Donnée enregistrée avec succès !";
                     resetForm();
                     chargerDepenses();
                 } else {
@@ -341,19 +279,17 @@
             })
             .catch(error => {
                 msgDiv.style.color = 'var(--error-color)';
-                msgDiv.innerText = "Erreur réseau/CORS.";
+                msgDiv.innerText = "Erreur réseau.";
                 console.error(error);
             });
         });
 
         function chargerDepenses() {
             const liste = document.getElementById('listeDepenses');
+            const cibleMois = filtreMoisInput.value.trim();
             liste.innerHTML = "<p style='text-align:center; color:#888;'>Chargement...</p>";
 
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "getData" })
-            })
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getData" }) })
             .then(response => response.json())
             .then(res => {
                 if(res.result === "success" && res.data.length > 0) {
@@ -365,45 +301,51 @@
                             titre: valeurs[1] ? valeurs[1].toString() : "Sans titre",
                             montant: parseFloat(valeurs[2] || 0),
                             payeur: valeurs[3] ? valeurs[3].toString().trim() : "Inconnu",
-                            date: valeurs[4] ? valeurs[4].toString() : "",
-                            statut: valeurs[5] ? valeurs[5].toString() : "",
+                            date: valeurs[4] ? valeurs[4].toString().trim() : "",
+                            statut: valeurs[5] ? valeurs[5].toString().trim() : "En attente",
                             nosplit: valeurs[6] ? valeurs[6].toString().trim() : "Non"
                         };
                     });
 
+                    const dataDuMois = localData.filter(item => item.date.includes(cibleMois));
                     liste.innerHTML = "";
                     
-                    let totalNicolas = 0;
-                    let totalPauline = 0;
+                    let virementDuMois = 0;
+                    let virementEstFait = false;
+                    let dateVirementFait = "";
 
-                    localData.forEach(item => {
-                        if (item.nosplit !== "Oui" && item.nosplit !== "oui") {
-                            if (item.payeur === "Nicolas") totalNicolas += item.montant;
-                            if (item.payeur === "Pauline") totalPauline += item.montant;
+                    dataDuMois.forEach(item => {
+                        if(item.statut.startsWith("Virement fait le")) {
+                            virementEstFait = true;
+                            dateVirementFait = item.statut;
+                        }
+
+                        if (item.nosplit === "Oui" || item.nosplit === "oui") {
+                            if (item.payeur === "Pauline") virementDuMois += item.montant;
+                            if (item.payeur === "Nicolas") virementDuMois -= item.montant;
+                        } else {
+                            if (item.payeur === "Pauline") virementDuMois += (item.montant / 2);
+                            if (item.payeur === "Nicolas") virementDuMois -= (item.montant / 2);
                         }
                     });
 
-                    calculerVirement(totalNicolas, totalPauline);
+                    calculerVirementVisualisation(virementDuMois, virementEstFait, dateVirementFait);
 
-                    // Tri des dépenses chronologiquement (par date) pour l'affichage de l'historique
-                    const localDataTrie = [...localData].sort((a, b) => {
-                        const parseDate = (str) => {
-                            const p = str.split('/');
-                            return p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}`) : new Date(str);
-                        };
-                        return parseDate(b.date) - parseDate(a.date);
-                    });
+                    if(dataDuMois.length === 0) {
+                        liste.innerHTML = "<p style='text-align:center; color:#888;'>Aucune entrée pour ce mois.</p>";
+                        return;
+                    }
 
-                    localDataTrie.forEach(item => {
+                    dataDuMois.reverse().forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'depense-item';
                         div.innerHTML = `
                             <div class="depense-info">
                                 <span class="depense-titre">
                                     ${item.titre} 
-                                    ${(item.nosplit === "Oui" || item.nosplit === "oui") ? '<span class="badge-perso">Perso</span>' : ''}
+                                    ${(item.nosplit === "Oui" || item.nosplit === "oui") ? '<span class="badge-facture">Facture 100%</span>' : ''}
                                 </span>
-                                <span class="depense-meta">${formaterDate(item.date)} • Payé par <strong>${item.payeur}</strong></span>
+                                <span class="depense-meta">Mois : ${item.date} • Payé par <strong>${item.payeur}</strong></span>
                             </div>
                             <div class="depense-right">
                                 <span class="depense-montant">${item.montant.toFixed(2)} €</span>
@@ -416,8 +358,7 @@
                         liste.appendChild(div);
                     });
                 } else {
-                    liste.innerHTML = "<p style='text-align:center; color:#888;'>Aucune dépense trouvée.</p>";
-                    document.getElementById('balanceBox').innerText = "Aucune dépense partagée. Équilibre parfait !";
+                    liste.innerHTML = "<p style='text-align:center; color:#888;'>Aucune donnée trouvée.</p>";
                 }
             })
             .catch(error => {
@@ -426,81 +367,69 @@
             });
         }
 
-        function calculerVirement(nicolasTotal, paulineTotal) {
+        function calculerVirementVisualisation(totalVirement, estFait, dateTexte) {
             const box = document.getElementById('balanceBox');
-            const diff = nicolasTotal - paulineTotal;
-            
-            if (diff === 0) {
+            const statusDiv = document.getElementById('virementStatus');
+            const btn = document.getElementById('btnMarquerFait');
+
+            if (totalVirement === 0) {
                 box.style.backgroundColor = "#1b5e20";
-                box.innerText = "Équilibre parfait : Personne ne doit rien !";
-            } else if (diff > 0) {
-                const virement = diff / 2;
+                box.innerText = "Équilibre parfait pour ce mois !";
+                btn.style.display = "none";
+                statusDiv.innerText = "";
+            } else if (totalVirement > 0) {
                 box.style.backgroundColor = "#e65100";
-                box.innerText = `Pauline doit faire un virement de ${virement.toFixed(2)} € à Nicolas`;
+                box.innerText = `Virement dû : Nicolas doit ${totalVirement.toFixed(2)} € à Pauline`;
+                if(estFait) {
+                    statusDiv.innerHTML = `✅ ${dateTexte}`;
+                    btn.style.display = "none";
+                } else {
+                    statusDiv.innerText = "⚠️ En attente de règlement";
+                    btn.style.display = "block";
+                }
             } else {
-                const virement = Math.abs(diff) / 2;
+                const absMontant = Math.abs(totalVirement);
                 box.style.backgroundColor = "#e65100";
-                box.innerText = `Nicolas doit faire un virement de ${virement.toFixed(2)} € à Pauline`;
+                box.innerText = `Virement dû : Pauline doit ${absMontant.toFixed(2)} € à Nicolas`;
+                if(estFait) {
+                    statusDiv.innerHTML = `✅ ${dateTexte}`;
+                    btn.style.display = "none";
+                } else {
+                    statusDiv.innerText = "⚠️ En attente de règlement";
+                    btn.style.display = "block";
+                }
             }
         }
 
-        function preparerEdition(id) {
-            const item = localData.find(d => d.id === id);
-            if (!item) return;
+        function marquerVirementFait() {
+            const cibleMois = filtreMoisInput.value.trim();
+            if (!confirm(`Clôturer les comptes de ${cibleMois} et marquer le virement comme effectué ?`)) return;
 
-            document.getElementById('formTitle').innerText = "Modifier la dépense";
-            document.getElementById('editId').value = id;
-            document.getElementById('titre').value = item.titre;
-            document.getElementById('montant').value = item.montant;
-            document.getElementById('date').value = formaterPourInputDate(item.date);
-            document.getElementById('payeur').value = item.payeur === "Pauline" ? "Pauline" : "Nicolas";
-            document.getElementById('noSplit').checked = (item.nosplit === "Oui" || item.nosplit === "oui");
+            const dateDuJour = new Date().toLocaleDateString('fr-FR').substr(0, 5);
+            const chaineStatut = `Virement fait le ${dateDuJour}`;
 
-            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
-            document.getElementById('cancelEditBtn').style.display = "block";
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-        }
-
-        function supprimerDepense(id) {
-            if (!confirm("Voulez-vous vraiment supprimer cette dépense ?")) return;
-
-            const msgDiv = document.getElementById('statusMsg');
-            msgDiv.style.color = 'var(--accent-orange)';
-            msgDiv.innerText = "Suppression dans le Sheet...";
-
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                body: JSON.stringify({ action: "deleteData", id: id })
-            })
-            .then(response => response.json())
-            .then(data => {
-                if(data.result === "success") {
-                    msgDiv.style.color = 'var(--secondary-color)';
-                    msgDiv.innerText = "Dépense supprimée !";
-                    chargerDepenses();
-                } else {
-                    msgDiv.style.color = 'var(--error-color)';
-                    msgDiv.innerText = "Erreur : " + data.error;
-                }
-            })
-            .catch(error => {
-                console.error(error);
+            const lignesDuMois = localData.filter(item => item.date.includes(cibleMois));
+            
+            let promesses = lignesDuMois.map(item => {
+                const payload = {
+                    action: "updateData",
+                    id: item.id,
+                    titre: item.titre,
+                    montant: item.montant,
+                    payeur: item.payeur,
+                    date: item.date,
+                    noSplit: item.nosplit,
+                    statut: chaineStatut
+                };
+                return fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
             });
-        }
 
-        function resetForm() {
-            document.getElementById('formTitle').innerText = "Ajouter une dépense";
-            document.getElementById('editId').value = "";
-            document.getElementById('budgetForm').reset();
-            initDateInput();
-            document.getElementById('submitBtn').innerText = "Ajouter la dépense";
-            document.getElementById('cancelEditBtn').style.display = "none";
-        }
+            document.getElementById('virementStatus').innerText = "Mise à jour de l'historique...";
 
-        window.onload = function() {
-            initDateInput();
-            chargerDepenses();
-        };
-    </script>
-</body>
-</html>
+            Promise.all(promesses)
+            .then(() => {
+                chargerDepenses();
+            })
+            .catch(err => {
+                alert("Erreur lors de la validation globale.");
+       

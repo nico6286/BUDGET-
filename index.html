@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+  <title>Budget Couple</title>
+  <!-- PWA Meta -->
+  <meta name="theme-color" content="#0f0f13" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Budget Couple" />
+  <meta name="application-name" content="Budget Couple" />
+  <link rel="manifest" id="pwa-manifest" />
+  <link rel="apple-touch-icon" id="pwa-apple-icon" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0f0f13;
+      --card:      #1a1a22;
+      --card2:     #222230;
+      --border:    #2e2e3e;
+      --text:      #dcdce8;
+      --muted:     #7878a0;
+      --violet:    #9d7bff;
+      --violet-d:  #7a5ce0;
+      --cyan:      #3dd9c5;
+      --cyan-d:    #28a896;
+      --orange:    #ff9f43;
+      --red:       #e05c6a;
+      --red-d:     #b84452;
+      --green:     #2ecc71;
+      --green-d:   #239a56;
+      --radius:    14px;
+      --radius-sm: 8px;
+      --shadow:    0 4px 24px rgba(0,0,0,.45);
+      --font:      'DM Sans', sans-serif;
+      --mono:      'DM Mono', monospace;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 0 0 80px;
+    }
+
+    /* ── HEADER ──────────────────────────────────── */
+    header {
+      background: linear-gradient(135deg, #1a1a28 0%, #0f0f18 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 18px 20px 14px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(12px);
+    }
+    .header-inner {
+      max-width: 520px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .logo {
+      font-size: 1.25rem;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      color: #fff;
+      flex: 1;
+    }
+    .logo span { color: var(--violet); }
+
+    .month-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+    }
+    .month-wrap label {
+      font-size: .7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      white-space: nowrap;
+    }
+    #filtreMois {
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--cyan);
+      font-family: var(--mono);
+      font-size: .95rem;
+      font-weight: 500;
+      width: 68px;
+      caret-color: var(--violet);
+    }
+
+    /* ── MAIN WRAPPER ────────────────────────────── */
+    main {
+      max-width: 520px;
+      margin: 0 auto;
+      padding: 20px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* ── BALANCE BOX ─────────────────────────────── */
+    #balanceBox {
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      border: 1px solid transparent;
+      transition: background .35s, border-color .35s;
+      box-shadow: var(--shadow);
+    }
+    #balanceBox.equilibre {
+      background: linear-gradient(135deg, #1a3528 0%, #152a20 100%);
+      border-color: #2e6348;
+    }
+    #balanceBox.virement {
+      background: linear-gradient(135deg, #2e1f0c 0%, #221607 100%);
+      border-color: #6e4315;
+    }
+    #balanceBox.chargement {
+      background: var(--card);
+      border-color: var(--border);
+    }
+    .balance-label {
+      font-size: .7rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+    #balanceText {
+      font-size: 1.15rem;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    #balanceBox.equilibre #balanceText { color: var(--green); }
+    #balanceBox.virement  #balanceText { color: var(--orange); }
+    #balanceBox.chargement #balanceText { color: var(--muted); }
+
+    .balance-amount {
+      font-family: var(--mono);
+      font-size: 2rem;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+    #balanceBox.equilibre .balance-amount { color: var(--green); }
+    #balanceBox.virement  .balance-amount { color: var(--orange); }
+
+    /* ── STATUT VIREMENT ─────────────────────────── */
+    #statutWrap {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+    }
+    #statutText {
+      font-size: .88rem;
+      color: var(--text);
+    }
+    #btnVirementFait {
+      display: none;
+      width: 100%;
+      background: linear-gradient(135deg, var(--green) 0%, var(--green-d) 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px 20px;
+      font-family: var(--font);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      letter-spacing: .01em;
+    }
+    #btnVirementFait:active { transform: scale(.97); opacity: .9; }
+
+    /* ── BOUTON ÉCLAIR ───────────────────────────── */
+    #btnEclair {
+      width: 100%;
+      background: linear-gradient(135deg, #2a1e4a 0%, #1e1635 100%);
+      color: var(--violet);
+      border: 1.5px solid var(--violet-d);
+      border-radius: var(--radius);
+      padding: 13px 20px;
+      font-family: var(--font);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      letter-spacing: .01em;
+      text-align: left;
+    }
+    #btnEclair:active { transform: scale(.98); background: #321e5e; }
+    #btnEclair .eclair-sub {
+      display: block;
+      font-size: .72rem;
+      font-weight: 400;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* ── FORMULAIRE ──────────────────────────────── */
+    .form-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px 18px 20px;
+    }
+    .form-title {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .form-group.full { grid-column: 1 / -1; }
+    .form-group label {
+      font-size: .72rem;
+      font-weight: 500;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .06em;
+    }
+    .form-group input,
+    .form-group select {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: .95rem;
+      padding: 11px 13px;
+      outline: none;
+      transition: border-color .2s;
+      width: 100%;
+      -webkit-appearance: none;
+    }
+    .form-group input:focus,
+    .form-group select:focus { border-color: var(--violet); }
+    .form-group select { cursor: pointer; }
+
+    /* Checkbox facture */
+    .checkbox-row {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      cursor: pointer;
+      transition: border-color .2s;
+    }
+    .checkbox-row:has(#isFacture:checked) { border-color: var(--orange); }
+    .checkbox-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--orange);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+    .checkbox-row .cb-label {
+      font-size: .88rem;
+      color: var(--text);
+      user-select: none;
+    }
+    .checkbox-row .cb-label span {
+      display: block;
+      font-size: .72rem;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    /* Boutons formulaire */
+    .form-actions {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+    }
+    .btn-primary {
+      flex: 1;
+      background: linear-gradient(135deg, var(--violet) 0%, var(--violet-d) 100%);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-sm);
+      padding: 13px;
+      font-family: var(--font);
+      font-size: .9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+    }
+    .btn-primary:active { transform: scale(.97); opacity: .85; }
+    .btn-secondary {
+      background: var(--card2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 13px 16px;
+      font-family: var(--font);
+      font-size: .9rem;
+      cursor: pointer;
+      transition: color .2s, transform .1s;
+    }
+    .btn-secondary:active { transform: scale(.97); color: var(--text); }
+
+    /* ── HISTORIQUE ──────────────────────────────── */
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .section-title {
+      font-size: .75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: var(--muted);
+    }
+    .count-badge {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 10px;
+      font-size: .7rem;
+      color: var(--muted);
+      font-family: var(--mono);
+    }
+
+    #listeDepenses {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .dep-item {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 13px 15px;
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      gap: 5px 12px;
+      transition: border-color .2s;
+    }
+    .dep-item:hover { border-color: #3a3a50; }
+
+    .dep-top-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .dep-titre {
+      font-size: .95rem;
+      font-weight: 500;
+      color: var(--text);
+    }
+    .badge-facture {
+      background: rgba(255,159,67,.12);
+      color: var(--orange);
+      border: 1px solid rgba(255,159,67,.3);
+      border-radius: 4px;
+      font-size: .65rem;
+      font-weight: 600;
+      padding: 1px 7px;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      white-space: nowrap;
+    }
+
+    .dep-amount {
+      font-family: var(--mono);
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--cyan);
+      text-align: right;
+    }
+
+    .dep-meta {
+      font-size: .78rem;
+      color: var(--muted);
+    }
+    .dep-meta .payeur {
+      color: var(--violet);
+      font-weight: 500;
+    }
+
+    .dep-actions {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    .dep-actions a {
+      font-size: .75rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color .2s;
+    }
+    .dep-actions .lien-edit { color: var(--cyan); }
+    .dep-actions .lien-edit:hover { color: #fff; }
+    .dep-actions .lien-suppr { color: var(--red); }
+    .dep-actions .lien-suppr:hover { color: #ff7986; }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+    .empty-state .icon { font-size: 2.5rem; display: block; margin-bottom: 10px; opacity: .4; }
+
+    /* ── TOAST ───────────────────────────────────── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 22px;
+      font-size: .88rem;
+      color: var(--text);
+      box-shadow: var(--shadow);
+      transition: transform .35s cubic-bezier(.34,1.56,.64,1), opacity .35s;
+      opacity: 0;
+      z-index: 9999;
+      white-space: nowrap;
+    }
+    #toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    #toast.success { border-color: var(--green); color: var(--green); }
+    #toast.error   { border-color: var(--red);   color: var(--red); }
+
+    /* ── SPINNER ─────────────────────────────────── */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.15);
+      border-top-color: var(--violet);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      vertical-align: middle;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── LOADING OVERLAY ─────────────────────────── */
+    #loadingOverlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15,15,19,.7);
+      backdrop-filter: blur(4px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 14px;
+    }
+    #loadingOverlay.active { display: flex; }
+    #loadingOverlay .spin-big {
+      width: 40px; height: 40px;
+      border: 3px solid rgba(157,123,255,.15);
+      border-top-color: var(--violet);
+      border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    #loadingOverlay p { color: var(--muted); font-size: .85rem; }
+
+    @media (min-width: 521px) {
+      header { padding: 20px 28px 16px; }
+      main { padding: 24px 20px 0; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Loading overlay -->
+<div id="loadingOverlay">
+  <div class="spin-big"></div>
+  <p>Chargement…</p>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- Header -->
+<header>
+  <div class="header-inner">
+    <div class="logo">Budget <span>Couple</span></div>
+    <div class="month-wrap">
+      <label for="filtreMois">Mois</label>
+      <input type="text" id="filtreMois" maxlength="7" placeholder="MM/AAAA" autocomplete="off" spellcheck="false" />
+    </div>
+  </div>
+</header>
+
+<main>
+
+  <!-- Balance Box -->
+  <div id="balanceBox" class="chargement">
+    <div class="balance-label">Équilibre du mois</div>
+    <div id="balanceText">Calcul en cours…</div>
+    <div id="balanceAmount" class="balance-amount" style="display:none"></div>
+  </div>
+
+  <!-- Statut virement -->
+  <div id="statutWrap">
+    <div id="statutText">—</div>
+    <button id="btnVirementFait">✅ Marquer le virement comme FAIT</button>
+  </div>
+
+  <!-- Bouton éclair -->
+  <button id="btnEclair">
+    ⚡ Pré-remplir Facture Mensuelle
+    <span class="eclair-sub">Facture fixe · Pauline payeur · 959,21 € · 100%</span>
+  </button>
+
+  <!-- Formulaire -->
+  <div class="form-card" id="formCard">
+    <div class="form-title" id="formTitle">Nouvelle dépense</div>
+    <input type="hidden" id="editId" value="" />
+    <input type="hidden" id="editStatut" value="En attente" />
+    <div class="form-grid">
+      <div class="form-group full">
+        <label for="inputTitre">Intitulé</label>
+        <input type="text" id="inputTitre" placeholder="Ex : Courses Lidl" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="inputMontant">Montant (€)</label>
+        <input type="number" id="inputMontant" placeholder="0.00" step="0.01" min="0" inputmode="decimal" />
+      </div>
+      <div class="form-group">
+        <label for="inputDate">Mois (MM/AAAA)</label>
+        <input type="text" id="inputDate" maxlength="7" placeholder="MM/AAAA" autocomplete="off" />
+      </div>
+      <div class="form-group">
+        <label for="inputPayeur">Payeur</label>
+        <select id="inputPayeur">
+          <option value="Nicolas">Nicolas</option>
+          <option value="Pauline">Pauline</option>
+        </select>
+      </div>
+      <label class="checkbox-row" for="isFacture">
+        <input type="checkbox" id="isFacture" />
+        <span class="cb-label">
+          Facture fixe (100% à charge du conjoint)
+          <span>Charge complète · non partagée 50/50</span>
+        </span>
+      </label>
+    </div>
+    <div class="form-actions">
+      <button class="btn-primary" id="btnSubmit">Ajouter</button>
+      <button class="btn-secondary" id="btnAnnuler" style="display:none">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Historique -->
+  <div class="section-header">
+    <div class="section-title">Dépenses du mois</div>
+    <div class="count-badge" id="countBadge">0</div>
+  </div>
+  <div id="listeDepenses"></div>
+
+</main>
+
+<script>
+"use strict";
+
+/* ── CONFIG ─────────────────────────────────────── */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
+
+/* ── STATE ──────────────────────────────────────── */
+let allData = [];        // toutes les entrées (tableau de tableaux)
+let currentMois = "";    // filtre actif
+let refreshTimer = null; // debounce
+
+/* ── DOM REFS ───────────────────────────────────── */
+const filtreMois     = document.getElementById("filtreMois");
+const balanceBox     = document.getElementById("balanceBox");
+const balanceText    = document.getElementById("balanceText");
+const balanceAmount  = document.getElementById("balanceAmount");
+const statutText     = document.getElementById("statutText");
+const btnVirementFait= document.getElementById("btnVirementFait");
+const btnEclair      = document.getElementById("btnEclair");
+const formTitle      = document.getElementById("formTitle");
+const editId         = document.getElementById("editId");
+const editStatut     = document.getElementById("editStatut");
+const inputTitre     = document.getElementById("inputTitre");
+const inputMontant   = document.getElementById("inputMontant");
+const inputDate      = document.getElementById("inputDate");
+const inputPayeur    = document.getElementById("inputPayeur");
+const isFacture      = document.getElementById("isFacture");
+const btnSubmit      = document.getElementById("btnSubmit");
+const btnAnnuler     = document.getElementById("btnAnnuler");
+const listeDepenses  = document.getElementById("listeDepenses");
+const countBadge     = document.getElementById("countBadge");
+const loadingOverlay = document.getElementById("loadingOverlay");
+
+/* ── UTILS ──────────────────────────────────────── */
+function moisActuel() {
+  const d = new Date();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const yyyy = d.getFullYear();
+  return `${mm}/${yyyy}`;
+}
+
+function dateJour() {
+  const d = new Date();
+  return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+}
+
+function genId() {
+  return "id-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
+}
+
+function showToast(msg, type = "") {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "show " + type;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.className = ""; }, 3000);
+}
+
+function setLoading(on) {
+  loadingOverlay.classList.toggle("active", on);
+}
+
+/* ── API ─────────────────────────────────────────── */
+async function apiCall(payload) {
+  const resp = await fetch(SCRIPT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "text/plain" },
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+  return resp.json();
+}
+
+/* ── PARSER LA RÉPONSE getData (robuste à toute structure) ── */
+function parseDataResponse(raw) {
+  console.log("📦 Réponse brute getData:", JSON.stringify(raw));
+
+  // Cas 1 : tableau direct de lignes → [[id, titre, ...], [...]]
+  if (Array.isArray(raw)) {
+    // Chaque élément est déjà un tableau de valeurs ?
+    if (raw.length === 0) return [];
+    if (Array.isArray(raw[0])) return raw; // [[...], [...]]
+    // Tableau d'objets avec propriété valeurs ?
+    if (raw[0] && Array.isArray(raw[0].valeurs)) return raw.map(r => r.valeurs);
+    // Tableau d'objets avec propriété data ?
+    if (raw[0] && Array.isArray(raw[0].data)) return raw.map(r => r.data);
+    // Sinon on retourne tel quel (cas inconnu)
+    return raw;
+  }
+
+  // Cas 2 : objet enveloppant
+  if (raw && typeof raw === "object") {
+    // { data: [[...], [...]] }
+    if (Array.isArray(raw.data)) return parseDataResponse(raw.data);
+    // { valeurs: [[...], [...]] }
+    if (Array.isArray(raw.valeurs)) return parseDataResponse(raw.valeurs);
+    // { rows: [...] }
+    if (Array.isArray(raw.rows)) return parseDataResponse(raw.rows);
+    // { result: [...] }
+    if (Array.isArray(raw.result)) return parseDataResponse(raw.result);
+    // { values: [...] }
+    if (Array.isArray(raw.values)) return parseDataResponse(raw.values);
+  }
+
+  console.warn("⚠️ Structure getData non reconnue :", raw);
+  return [];
+}
+
+/* ── CHARGER LES DONNÉES ──────────────────────────── */
+async function chargerDonnees(showSpinner = true) {
+  if (showSpinner) setLoading(true);
+  try {
+    const raw = await apiCall({ action: "getData" });
+    allData = parseDataResponse(raw);
+    console.log(`✅ ${allData.length} ligne(s) chargée(s). Exemple ligne 0:`, allData[0]);
+    rafraichirVue();
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur de connexion au serveur", "error");
+    balanceBox.className = "chargement";
+    balanceText.textContent = "Impossible de charger les données";
+    balanceAmount.style.display = "none";
+  } finally {
+    if (showSpinner) setLoading(false);
+  }
+}
+
+/* ── HELPER : normalise une date ISO ou MM/AAAA → "MM/AAAA" ── */
+function normaliserDate(val) {
+  if (!val) return "";
+  const s = String(val).trim();
+  // Déjà au bon format MM/AAAA
+  if (/^\d{2}\/\d{4}$/.test(s)) return s;
+  // Format ISO (ex: "2026-05-31T22:00:00.000Z" = 01/06/2026 heure locale)
+  // On utilise Intl.DateTimeFormat pour obtenir MM/AAAA dans le fuseau local
+  // ce qui gère correctement Paris (UTC+2) et tout autre fuseau
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+    const d = new Date(s);
+    const parts = new Intl.DateTimeFormat("fr-FR", {
+      month: "2-digit", year: "numeric", timeZone: "Europe/Paris"
+    }).formatToParts(d);
+    const mm   = parts.find(p => p.type === "month").value;
+    const yyyy = parts.find(p => p.type === "year").value;
+    return `${mm}/${yyyy}`;
+  }
+  return s;
+}
+
+/* ── HELPER : accès unifié aux valeurs d'une ligne ── */
+// Gère : tableau plat, {valeurs:[…]}, objet à clés nommées
+// avec ou sans espaces traîlants ("Titre ", "Montant ", "Payeur "…)
+function rowVals(row) {
+  if (Array.isArray(row)) return row;
+  if (row && Array.isArray(row.valeurs)) return row.valeurs;
+  if (row && Array.isArray(row.data))    return row.data;
+  if (row && Array.isArray(row.values))  return row.values;
+
+  if (row && typeof row === "object") {
+    // Normalise toutes les clés : trim + lowercase
+    const n = {};
+    for (const k of Object.keys(row)) n[k.trim().toLowerCase()] = row[k];
+    const get = (...keys) => { for (const k of keys) if (n[k] !== undefined) return n[k]; };
+    return [
+      get("id")      ?? "",
+      get("titre")   ?? "",
+      get("montant") ?? 0,
+      get("payeur")  ?? "",
+      normaliserDate(get("date")),
+      get("statut")  ?? "",
+      get("nosplit") ?? "Non"
+    ];
+  }
+  return [];
+}
+
+/* ── RAFRAÎCHIR LA VUE (sans appel réseau) ───────── */
+function rafraichirVue() {
+  const mois = currentMois;
+
+  // Filtrer les dépenses du mois
+  const depMois = allData.filter(row => String(rowVals(row)[4]) === mois);
+
+  console.log(`🔍 Filtre "${mois}" → ${depMois.length} dépense(s) sur ${allData.length} total`);
+  if (allData.length > 0) {
+    console.log("   Exemple ligne[0] brute:", allData[0]);
+    console.log("   Exemple ligne[0] vals :", rowVals(allData[0]));
+  }
+
+  // ── Calcul de la balance ───────────────────
+  let detteNicolas = 0;
+  let estRegle = false;
+  let dateReglmt = "";
+
+  depMois.forEach(row => {
+    const r = rowVals(row);
+    const statut  = String(r[5] || "");
+    const noSplit = String(r[6] || "Non");
+    const montant = parseFloat(r[2]) || 0;
+    const payeur  = String(r[3] || "");
+
+    if (statut.startsWith("Virement fait le")) {
+      estRegle = true;
+      dateReglmt = statut.replace("Virement fait le ", "").trim();
+    }
+
+    if (noSplit === "Oui") {
+      if (payeur === "Pauline") detteNicolas += montant;
+      else if (payeur === "Nicolas") detteNicolas -= montant;
+    } else {
+      if (payeur === "Pauline") detteNicolas += montant / 2;
+      else if (payeur === "Nicolas") detteNicolas -= montant / 2;
+    }
+  });
+
+  const montantAbs = Math.abs(detteNicolas).toFixed(2);
+  const aucuneDep  = depMois.length === 0;
+
+  // ── Affichage balance ──────────────────────
+  if (aucuneDep) {
+    balanceBox.className = "chargement";
+    balanceText.textContent = "Aucune dépense ce mois-ci";
+    balanceAmount.style.display = "none";
+  } else if (Math.abs(detteNicolas) < 0.01) {
+    balanceBox.className = "equilibre";
+    balanceText.textContent = "🎉 Parfait équilibre ! Rien à rembourser.";
+    balanceAmount.style.display = "none";
+  } else if (detteNicolas > 0) {
+    balanceBox.className = "virement";
+    balanceText.textContent = "Virement dû :";
+    balanceAmount.style.display = "block";
+    balanceAmount.textContent = `Nicolas → ${montantAbs} € → Pauline`;
+  } else {
+    balanceBox.className = "virement";
+    balanceText.textContent = "Virement dû :";
+    balanceAmount.style.display = "block";
+    balanceAmount.textContent = `Pauline → ${montantAbs} € → Nicolas`;
+  }
+
+  // ── Statut & bouton virement ───────────────
+  const virementDu = !aucuneDep && Math.abs(detteNicolas) >= 0.01;
+
+  if (aucuneDep) {
+    statutText.textContent = "Aucune dépense enregistrée pour ce mois.";
+    btnVirementFait.style.display = "none";
+  } else if (estRegle) {
+    statutText.textContent = `✅ Virement fait le ${dateReglmt}`;
+    btnVirementFait.style.display = "none";
+  } else if (virementDu) {
+    statutText.textContent = "⚠️ En attente de règlement";
+    btnVirementFait.style.display = "block";
+  } else {
+    statutText.textContent = "✅ Aucun virement nécessaire";
+    btnVirementFait.style.display = "none";
+  }
+
+  // ── Liste dépenses ─────────────────────────
+  countBadge.textContent = depMois.length;
+
+  if (depMois.length === 0) {
+    listeDepenses.innerHTML = `<div class="empty-state"><span class="icon">🧾</span>Aucune dépense pour ${mois}</div>`;
+    return;
+  }
+
+  // Ordre inversé (plus récent ajouté en premier)
+  const depInversees = [...depMois].reverse();
+  listeDepenses.innerHTML = depInversees.map(row => {
+    const r  = rowVals(row);
+    const id      = r[0];
+    const titre   = r[1] || "—";
+    const montant = parseFloat(r[2] || 0).toFixed(2);
+    const payeur  = r[3] || "—";
+    const noSplit = String(r[6] || "Non") === "Oui";
+
+    const badgeFact = noSplit
+      ? `<span class="badge-facture">100%</span>`
+      : "";
+
+    return `
+      <div class="dep-item" data-id="${id}">
+        <div class="dep-top-left">
+          <span class="dep-titre">${escHtml(titre)}</span>
+          ${badgeFact}
+        </div>
+        <div class="dep-amount">${montant} €</div>
+        <div class="dep-meta">payé par <span class="payeur">${escHtml(payeur)}</span></div>
+        <div class="dep-actions">
+          <a class="lien-edit" data-id="${id}">Modifier</a>
+          <a class="lien-suppr" data-id="${id}">Suppr.</a>
+        </div>
+      </div>`;
+  }).join("");
+
+  // Délégation d'événements
+  listeDepenses.querySelectorAll(".lien-edit").forEach(a => {
+    a.addEventListener("click", () => ouvrirEdition(a.dataset.id));
+  });
+  listeDepenses.querySelectorAll(".lien-suppr").forEach(a => {
+    a.addEventListener("click", () => supprimerDepense(a.dataset.id));
+  });
+}
+
+function escHtml(str) {
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+}
+
+/* ── FORMULAIRE ──────────────────────────────────── */
+function resetForm() {
+  editId.value    = "";
+  editStatut.value= "En attente";
+  inputTitre.value   = "";
+  inputMontant.value = "";
+  inputDate.value    = currentMois;
+  inputPayeur.value  = "Nicolas";
+  isFacture.checked  = false;
+  formTitle.textContent  = "Nouvelle dépense";
+  btnSubmit.textContent  = "Ajouter";
+  btnAnnuler.style.display = "none";
+}
+
+function ouvrirEdition(id) {
+  const row = allData.find(r => String(rowVals(r)[0]) === String(id));
+  if (!row) return;
+  const r = rowVals(row);
+
+  editId.value       = r[0];
+  editStatut.value   = r[5] || "En attente";
+  inputTitre.value   = r[1] || "";
+  inputMontant.value = r[2] || "";
+  inputDate.value    = r[4] || currentMois;
+  inputPayeur.value  = r[3] || "Nicolas";
+  isFacture.checked  = String(r[6] || "Non") === "Oui";
+
+  formTitle.textContent  = "Modifier la dépense";
+  btnSubmit.textContent  = "Enregistrer";
+  btnAnnuler.style.display = "block";
+
+  document.getElementById("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/* ── SUBMIT (ajout ou modif) ─────────────────────── */
+btnSubmit.addEventListener("click", async () => {
+  const titre   = inputTitre.value.trim();
+  const montant = parseFloat(inputMontant.value);
+  const date    = inputDate.value.trim();
+  const payeur  = inputPayeur.value;
+  const noSplit = isFacture.checked ? "Oui" : "Non";
+
+  if (!titre)      { showToast("L'intitulé est requis", "error"); inputTitre.focus(); return; }
+  if (isNaN(montant) || montant <= 0) { showToast("Montant invalide", "error"); inputMontant.focus(); return; }
+  if (!/^\d{2}\/\d{4}$/.test(date)) { showToast("Format de date invalide (MM/AAAA)", "error"); inputDate.focus(); return; }
+
+  setLoading(true);
+  try {
+    if (editId.value) {
+      await apiCall({
+        action: "updateData",
+        id:      editId.value,
+        titre, montant, payeur, date, noSplit,
+        statut:  editStatut.value
+      });
+      showToast("Dépense modifiée ✔", "success");
+    } else {
+      await apiCall({
+        action: "addData",
+        id: genId(),
+        titre, montant, payeur, date, noSplit,
+        statut: "En attente"
+      });
+      showToast("Dépense ajoutée ✔", "success");
+    }
+    resetForm();
+    await chargerDonnees(false);
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de la sauvegarde", "error");
+  } finally {
+    setLoading(false);
+  }
+});
+
+btnAnnuler.addEventListener("click", resetForm);
+
+/* ── SUPPRESSION ─────────────────────────────────── */
+async function supprimerDepense(id) {
+  if (!confirm("Supprimer cette dépense ?")) return;
+  setLoading(true);
+  try {
+    await apiCall({ action: "deleteData", id });
+    showToast("Dépense supprimée", "success");
+    await chargerDonnees(false);
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de la suppression", "error");
+  } finally {
+    setLoading(false);
+  }
+}
+
+/* ── VIREMENT FAIT ───────────────────────────────── */
+btnVirementFait.addEventListener("click", async () => {
+  if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
+
+  const statut = `Virement fait le ${dateJour()}`;
+  const depMois = allData.filter(row => String(rowVals(row)[4]) === currentMois);
+
+  setLoading(true);
+  try {
+    for (const row of depMois) {
+      const r = rowVals(row);
+      await apiCall({
+        action:  "updateData",
+        id:      r[0],
+        titre:   r[1],
+        montant: parseFloat(r[2]),
+        payeur:  r[3],
+        date:    r[4],
+        noSplit: r[6] || "Non",
+        statut
+      });
+    }
+    showToast("Virement enregistré ✔", "success");
+    await chargerDonnees(false);
+  } catch (e) {
+    console.error(e);
+    showToast("Erreur lors de la mise à jour", "error");
+  } finally {
+    setLoading(false);
+  }
+});
+
+/* ── BOUTON ÉCLAIR ───────────────────────────────── */
+btnEclair.addEventListener("click", () => {
+  editId.value    = "";
+  editStatut.value= "En attente";
+  inputTitre.value   = "Facture";
+  inputMontant.value = "959.21";
+  inputDate.value    = currentMois;
+  inputPayeur.value  = "Pauline";
+  isFacture.checked  = true;
+  formTitle.textContent  = "Nouvelle dépense";
+  btnSubmit.textContent  = "Ajouter";
+  btnAnnuler.style.display = "none";
+
+  inputMontant.focus();
+  inputMontant.select();
+});
+
+/* ── FILTRE MOIS ─────────────────────────────────── */
+filtreMois.addEventListener("input", () => {
+  const val = filtreMois.value.trim();
+  // Mise à jour du champ date du formulaire en temps réel
+  if (/^\d{2}\/\d{4}$/.test(val)) {
+    currentMois = val;
+    inputDate.value = val;
+    // Debounce 400ms pour éviter des appels réseau frénétiques
+    clearTimeout(refreshTimer);
+    refreshTimer = setTimeout(() => chargerDonnees(false), 400);
+  } else if (/^\d{2}\/\d{4}$/.test(val) === false && val.length === 7) {
+    // Format incorrect, on rafraichit juste la vue locale (sans appel réseau)
+    currentMois = val;
+    rafraichirVue();
+  }
+  // Moins de 7 chars : on attend sans rien faire
+});
+
+/* ── INIT ────────────────────────────────────────── */
+(function init() {
+  currentMois = moisActuel();
+  filtreMois.value  = currentMois;
+  inputDate.value   = currentMois;
+  chargerDonnees(true);
+})();
+</script>
+
+<script>
+/* ══════════════════════════════════════════════
+   PWA BOOTSTRAP — Manifest + Service Worker
+   Tout est généré inline pour fonctionner avec
+   un seul fichier HTML sur GitHub Pages.
+══════════════════════════════════════════════ */
+(function initPWA() {
+
+  /* ── ICÔNE SVG encodée en base64 ── */
+  // Icône violette "BC" sur fond sombre, 512×512
+  const iconSVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+    <rect width="512" height="512" rx="96" fill="#1a1a22"/>
+    <rect x="16" y="16" width="480" height="480" rx="80" fill="#0f0f13"/>
+    <text x="256" y="300" font-family="system-ui,sans-serif" font-size="200"
+          font-weight="700" fill="#9d7bff" text-anchor="middle">BC</text>
+    <circle cx="390" cy="140" r="30" fill="#3dd9c5" opacity="0.8"/>
+  </svg>`;
+  const iconB64 = "data:image/svg+xml;base64," + btoa(unescape(encodeURIComponent(iconSVG)));
+
+  /* ── Manifest dynamique ── */
+  const manifest = {
+    name: "Budget Couple",
+    short_name: "Budget",
+    description: "Gérez les dépenses partagées du couple",
+    start_url: "./",
+    display: "standalone",
+    orientation: "portrait",
+    background_color: "#0f0f13",
+    theme_color: "#0f0f13",
+    lang: "fr",
+    icons: [
+      { src: iconB64, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
+      { src: iconB64, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
+    ]
+  };
+
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: "application/json" });
+  const manifestURL  = URL.createObjectURL(manifestBlob);
+  document.getElementById("pwa-manifest").href = manifestURL;
+  document.getElementById("pwa-apple-icon").href = iconB64;
+
+  /* ── Service Worker inline ── */
+  const SW_VERSION = "budget-couple-v1";
+  const swCode = `
+const CACHE = "${SW_VERSION}";
+const ASSETS = [self.location.href.replace(/\/sw-[^/]+$/, '/')];
+
+self.addEventListener("install", e => {
+  e.waitUntil(
+    caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener("activate", e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener("fetch", e => {
+  // Ne pas intercepter les requêtes vers Apps Script (Google)
+  if (e.request.url.includes("script.google.com")) return;
+  e.respondWith(
+    caches.match(e.request).then(cached => cached || fetch(e.request).then(resp => {
+      if (resp && resp.status === 200 && resp.type !== "opaque") {
+        const clone = resp.clone();
+        caches.open(CACHE).then(c => c.put(e.request, clone));
+      }
+      return resp;
+    }).catch(() => caches.match('./') ))
+  );
+});
+`;
+
+  if ("serviceWorker" in navigator) {
+    const swBlob = new Blob([swCode], { type: "application/javascript" });
+    const swURL  = URL.createObjectURL(swBlob);
+
+    navigator.serviceWorker.register(swURL, { scope: "./" })
+      .then(reg => {
+        console.log("✅ Service Worker enregistré", reg.scope);
+      })
+      .catch(err => {
+        // Sur file:// ça échoue normalement, pas de panique
+        console.warn("SW non enregistré (normal en local) :", err.message);
+      });
+  }
+
+})();
+</script>
+
+</body>
+</html>

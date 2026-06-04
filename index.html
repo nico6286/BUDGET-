@@ -240,6 +240,11 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
     .form-group {
       display: flex;
       flex-direction: column;
@@ -876,7 +881,6 @@ function resetForm() {
   btnAnnuler.style.display = "none";
 }
 
-/* ── FONCTION CORRIGÉE ICI : ouvrirEdition (et non abrirEdition) ── */
 function ouvrirEdition(id) {
   const row = allData.find(r => String(rowVals(r)[0]) === String(id));
   if (!row) return;
@@ -956,7 +960,7 @@ async function supprimerDepense(id) {
   }
 }
 
-/* ── CORRECTION DU VIRMENT : TRAITEMENT SÉQUENTIEL POUR ÉVITER LE CRASH CORS ── */
+/* ── MODIFICATION DU BOUTON VIREMENT AVEC MISE À JOUR OPTIMISTE LOCALE ── */
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
@@ -965,7 +969,7 @@ btnVirementFait.addEventListener("click", async () => {
 
   setLoading(true);
   try {
-    // Une par une pour respecter les limites de requêtes de Google Apps Script
+    // 1. Envoi séquentiel au backend Google Sheets
     for (const row of depMois) {
       const r = rowVals(row);
       await apiCall({
@@ -978,10 +982,38 @@ btnVirementFait.addEventListener("click", async () => {
         noSplit: r[6] || "Non",
         statut
       });
+
+      // 💡 CORRECTION DU BUG : Mise à jour immédiate dans la mémoire de l'appli (évite l'effet de cache)
+      if (Array.isArray(row)) {
+        row[5] = statut;
+      } else if (row && Array.isArray(row.valeurs)) {
+        row.valeurs[5] = statut;
+      } else if (row && Array.isArray(row.data)) {
+        row.data[5] = statut;
+      } else if (row && Array.isArray(row.values)) {
+        row.values[5] = statut;
+      } else if (row && typeof row === "object") {
+        const key = Object.keys(row).find(k => k.trim().toLowerCase() === "statut") || "statut";
+        row[key] = statut;
+      }
     }
 
     showToast("Virement enregistré ✔", "success");
-    await chargerDonnees(false);
+    
+    // 2. On rafraîchit la vue instantanément avec les données locales modifiées
+    rafraichirVue();
+
+    // 3. On laisse respirer Google Sheets 2.5 secondes puis on fait un fetch de contrôle en tâche de fond
+    setTimeout(async () => {
+      try {
+        const raw = await apiCall({ action: "getData" });
+        allData = parseDataResponse(raw);
+        rafraichirVue();
+      } catch (err) {
+        console.warn("Synchro arrière-plan différée :", err);
+      }
+    }, 2500);
+
   } catch (e) {
     console.error(e);
     showToast("Erreur lors de la mise à jour (CORS/Throttling)", "error");

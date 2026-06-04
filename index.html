@@ -960,30 +960,41 @@ async function supprimerDepense(id) {
   }
 }
 
-/* ── MODIFICATION DU BOUTON VIREMENT AVEC MISE À JOUR OPTIMISTE LOCALE ── */
+/* ── MODIFICATION DU BOUTON VIREMENT (CORRECTION FORMAT DATE) ── */
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
   const statut = `Virement fait le ${dateJour()}`;
-  const depMois = allData.filter(row => String(rowVals(row)[4]) === currentMois);
+  
+  // On récupère les dépenses brutes du mois actuel pour garder leur structure d'origine
+  const depMois = allData.filter(row => {
+    const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
+    if (r.length > 4) {
+      return normaliserDate(r[4]) === currentMois;
+    }
+    return false;
+  });
 
   setLoading(true);
   try {
-    // 1. Envoi séquentiel au backend Google Sheets
+    // Envoi au backend Google Sheets avec la date brute d'origine
     for (const row of depMois) {
-      const r = rowVals(row);
+      let r = [];
+      if (Array.isArray(row)) r = row;
+      else r = (row.valeurs || row.data || row.values || []);
+
       await apiCall({
         action:  "updateData",
         id:      r[0],
         titre:   r[1],
         montant: parseFloat(r[2]),
         payeur:  r[3],
-        date:    r[4],
+        date:    r[4], // Conserve la valeur brute d'origine nécessaire pour Apps Script
         noSplit: r[6] || "Non",
-        statut
+        statut:  statut
       });
 
-      // 💡 CORRECTION DU BUG : Mise à jour immédiate dans la mémoire de l'appli (évite l'effet de cache)
+      // Mise à jour immédiate dans la mémoire locale de l'application
       if (Array.isArray(row)) {
         row[5] = statut;
       } else if (row && Array.isArray(row.valeurs)) {
@@ -1000,10 +1011,10 @@ btnVirementFait.addEventListener("click", async () => {
 
     showToast("Virement enregistré ✔", "success");
     
-    // 2. On rafraîchit la vue instantanément avec les données locales modifiées
+    // Rafraîchissement visuel immédiat
     rafraichirVue();
 
-    // 3. On laisse respirer Google Sheets 2.5 secondes puis on fait un fetch de contrôle en tâche de fond
+    // Petit contrôle de sécurité en tâche de fond après 2 secondes
     setTimeout(async () => {
       try {
         const raw = await apiCall({ action: "getData" });
@@ -1012,11 +1023,11 @@ btnVirementFait.addEventListener("click", async () => {
       } catch (err) {
         console.warn("Synchro arrière-plan différée :", err);
       }
-    }, 2500);
+    }, 2000);
 
   } catch (e) {
     console.error(e);
-    showToast("Erreur lors de la mise à jour (CORS/Throttling)", "error");
+    showToast("Erreur lors de la mise à jour", "error");
   } finally {
     setLoading(false);
   }

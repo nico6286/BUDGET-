@@ -965,21 +965,18 @@ btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
   setLoading(true);
-  
-  // DEBUG : Affiche dans la console du navigateur ce qu'il voit
-  console.log("Mois cherché :", currentMois);
-  
+
+  // On filtre en cherchant la date soit en index 4 (colonne E) soit 5 (colonne F)
   const depMois = allData.filter(row => {
     const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-    // DEBUG : Affiche chaque ligne analysée
-    console.log("Analyse ligne date :", r[4], "Normalisée :", normaliserDate(r[4]));
-    return r.length > 4 && normaliserDate(r[4]) === currentMois;
+    // On essaie r[4] sinon r[5]
+    const dateLue = r[4] || r[5] || ""; 
+    console.log("Analyse ligne date :", dateLue, "Normalisée :", normaliserDate(dateLue));
+    return normaliserDate(dateLue) === currentMois;
   });
 
-  console.log("Lignes trouvées pour mise à jour :", depMois.length);
-
   if (depMois.length === 0) {
-    alert("Aucune dépense trouvée pour le mois " + currentMois + ". Vérifie le format de date dans ton Sheet.");
+    alert("Aucune dépense trouvée pour le mois " + currentMois + ". Dates trouvées dans le sheet : " + allData.map(r => (r[4] || r[5])).join(", "));
     setLoading(false);
     return;
   }
@@ -987,25 +984,29 @@ btnVirementFait.addEventListener("click", async () => {
   try {
     for (const row of depMois) {
       let r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-      // Envoi manuel avec forçage de l'ID
+      // On envoie la mise à jour
       await apiCall({
         action: "updateData",
-        id: r[0], // L'ID doit absolument être correct ici
+        id: r[0],
         titre: r[1],
         montant: parseFloat(r[2]),
         payeur: r[3],
-        date: r[4],
+        date: r[4] || r[5],
         noSplit: r[6] || "Non",
         statut: `Virement fait le ${dateJour()}`
       });
     }
+
+    showToast("Virement enregistré !", "success");
+    await chargerDonnees(false);
+    rafraichirVue();
+
   } catch (e) {
-    alert("Erreur : " + e);
+    alert("Erreur : " + e.message);
   } finally {
     setLoading(false);
   }
 });
-
 btnEclair.addEventListener("click", () => {
   editId.value    = "";
   editStatut.value= "En attente";

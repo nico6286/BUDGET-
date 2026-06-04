@@ -89,7 +89,7 @@
 <body>
 
 <div class="container">
-    <div id="syncStatus" class="sync-status">🔄 Connexion au budget commun...</div>
+    <div id="syncStatus" class="sync-status">🔄 Connexion à Home Assistant...</div>
 
     <div class="balance-card">
         <h2>Virement de Fin de Mois</h2>
@@ -97,7 +97,7 @@
         <p id="balanceInstruction" style="color: var(--text-muted); margin: 0;"></p>
     </div>
 
-    <button class="secondary" onclick="pullFromCloud()">🔄 Forcer la synchronisation</button>
+    <button class="secondary" onclick="pullFromHA()">🔄 Forcer la synchronisation</button>
 
     <div class="quick-actions-card">
         <label>Configuration des charges fixes du couple</label>
@@ -155,8 +155,9 @@
 </div>
 
 <script>
-    // Clé de synchronisation totalement unique pour vous deux
-    const BIN_URL = "https://api.restful-api.dev/objects/nico_pauline_budget_2026"; 
+    // CONFIGURATION HOME ASSISTANT LOCALE
+    const HA_URL = "http://192.168.1.120:8123"; // Mettez l'IP locale ou votre adresse NabuCasa/externe
+    const HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlZjg0OGZkOGE5YzE0YWVhOGZmMjc2ZGZhNDBiODJkNyIsImlhdCI6MTc4MDU4ODA5MywiZXhwIjoyMDk1OTQ4MDkzfQ.rFBvKogu3GuSKm4oVKM7pi5BDfgXBRti61_u8hGXIWQ";
 
     let currentPayeur = 'Nicolas';
     let transactions = [];
@@ -173,71 +174,60 @@
         el.innerText = text;
         el.style.color = isError ? "#ef4444" : "#eab308";
         if(!isError && text.includes('✅')) {
-            setTimeout(() => { el.innerText = "☁️ Comptes synchronisés"; }, 3000);
+            setTimeout(() => { el.innerText = "🏠 Maison synchronisée (MariaDB)"; }, 3000);
         }
     }
 
-    async function pullFromCloud() {
-        setStatus("🔄 Synchronisation en cours...");
+    async function pullFromHA() {
+        setStatus("🔄 Synchro Home Assistant...");
         try {
-            const res = await fetch(BIN_URL);
-            if (!res.ok) {
-                if (res.status === 404) {
-                    transactions = [];
-                    history = [];
-                    updateLocalDOM();
-                    setStatus("✅ Prêt ! (Nouveau budget)");
-                    return;
+            const res = await fetch(`${HA_URL}/api/states/input_text.budget_couple`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${HA_TOKEN}`,
+                    'Content-Type': 'application/json'
                 }
-                throw new Error();
+            });
+            if (!res.ok) throw new Error();
+            const stateData = await res.json();
+            
+            if (stateData.state && stateData.state !== "unknown" && stateData.state !== "initial") {
+                const decoded = JSON.parse(stateData.state);
+                transactions = decoded.transactions || [];
+                history = decoded.history || [];
             }
-            const rawData = await res.json();
-            const data = rawData.data;
-            
-            transactions = data.transactions || [];
-            history = data.history || [];
-            
             updateLocalDOM();
             setStatus("✅ Données à jour !");
         } catch (e) {
-            setStatus("⚠️ Mode local actif (Prêt)", false);
+            setStatus("❌ Erreur de connexion à Home Assistant", true);
             transactions = JSON.parse(localStorage.getItem('couple_txs_final')) || [];
             history = JSON.parse(localStorage.getItem('couple_history_final')) || [];
             updateLocalDOM();
         }
     }
 
-    async function pushToCloud() {
-        setStatus("📤 Enregistrement...");
+    async function pushToHA() {
+        setStatus("📤 Sauvegarde à la maison...");
         localStorage.setItem('couple_txs_final', JSON.stringify(transactions));
         localStorage.setItem('couple_history_final', JSON.stringify(history));
 
+        const payload = JSON.stringify({ transactions, history });
+
         try {
-            await fetch(BIN_URL, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+            await fetch(`${HA_URL}/api/services/input_text/set_value`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${HA_TOKEN}`,
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify({
-                    name: "NicolasPaulineBudget",
-                    data: { transactions, history }
+                    entity_id: "input_text.budget_couple",
+                    value: payload
                 })
             });
-            setStatus("✅ Sauvegardé pour le couple !");
+            setStatus("✅ Sauvegardé à la maison !");
         } catch (e) {
-            // Si l'objet n'existe pas encore sur ce serveur de test, on le crée avec POST
-            try {
-                await fetch("https://api.restful-api.dev/objects", {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        id: "nico_pauline_budget_2026",
-                        name: "NicolasPaulineBudget",
-                        data: { transactions, history }
-                    })
-                });
-                setStatus("✅ Sauvegardé pour le couple !");
-            } catch(err) {
-                setStatus("⚠️ Sauvegardé localement uniquement", true);
-            }
+            setStatus("⚠️ Sauvegardé uniquement sur le téléphone", true);
         }
     }
 
@@ -259,9 +249,7 @@
 
         if (editingId) {
             transactions = transactions.map(t => {
-                if (t.id == editingId) {
-                    return { ...t, title, amount, payeur: currentPayeur, deferred: isDeferred, noSplit };
-                }
+                if (t.id == editingId) return { ...t, title, amount, payeur: currentPayeur, deferred: isDeferred, noSplit };
                 return t;
             });
             cancelEdit();
@@ -279,7 +267,7 @@
 
         updateLocalDOM();
         clearForm();
-        await pushToCloud();
+        await pushToHA();
     }
 
     async function addQuickFacture() {
@@ -298,7 +286,7 @@
             date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
         });
         updateLocalDOM();
-        await pushToCloud();
+        await pushToHA();
     }
 
     function editTx(id) {
@@ -338,7 +326,7 @@
             transactions = transactions.filter(t => t.id !== id);
             updateLocalDOM();
             if(document.getElementById('editingId').value == id) cancelEdit();
-            await pushToCloud();
+            await pushToHA();
         }
     }
 
@@ -371,7 +359,7 @@
         
         updateLocalDOM();
         cancelEdit();
-        await pushToCloud();
+        await pushToHA();
         alert(`Le mois de ${nomMois} a bien été archivé !`);
     }
 
@@ -379,7 +367,7 @@
         if(confirm("Supprimer ce mois de l'historique ?")) {
             history = history.filter(h => h.id !== id);
             updateLocalDOM();
-            await pushToCloud();
+            await pushToHA();
         }
     }
 
@@ -392,7 +380,7 @@
         if(confirm("⚠️ Êtes-vous sûr de vouloir EFFACER TOUT l'historique ?")) {
             history = [];
             updateLocalDOM();
-            await pushToCloud();
+            await pushToHA();
         }
     }
 
@@ -451,4 +439,11 @@
         historyList.innerHTML = '';
         
         if (history.length === 0) {
-            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pou
+            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pour le moment.</p>';
+        } else {
+            history.forEach(h => {
+                let txsHtml = '';
+                h.items.forEach(item => {
+                    txsHtml += `
+                        <div class="history-tx-item">
+                            <span>• ${item.title} (Payé par ${item.payeur}) ${item.noSplit 

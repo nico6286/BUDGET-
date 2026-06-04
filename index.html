@@ -91,7 +91,6 @@
             color: var(--accent-orange); padding: 10px; font-size: 0.9rem; 
             margin-bottom: 15px; border-radius: 6px; cursor: pointer; font-weight: bold;
         }
-        .btn-quick:hover { background-color: #37474f; }
 
         .status-msg { text-align: center; font-weight: bold; margin-top: 10px; min-height: 24px; }
 
@@ -128,7 +127,7 @@
             <input type="text" id="filtreMois" placeholder="Ex: 05/2026" style="text-align: center; font-weight: bold; font-size: 1.1rem;" maxlength="7">
         </div>
 
-        <div id="balanceBox" class="balance-box">Initialisation...</div>
+        <div id="balanceBox" class="balance-box">Chargement des données...</div>
         <div id="virementStatus" class="virement-status"></div>
         <button id="btnMarquerFait" class="btn-success" style="display:none;" onclick="marquerVirementFait()">Marquer le virement comme FAIT</button>
         
@@ -144,7 +143,7 @@
 
                 <div class="form-group">
                     <label for="titre">Intitulé de la dépense</label>
-                    <input type="text" id="titre" required placeholder="Ex: Facture, Courses, Café, Train...">
+                    <input type="text" id="titre" required placeholder="Ex: Facture, Courses...">
                 </div>
                 
                 <div class="form-group">
@@ -154,7 +153,7 @@
 
                 <div class="form-group">
                     <label for="dateMois">Mois de la dépense (MM/AAAA)</label>
-                    <input type="text" id="dateMois" required placeholder="Ex: 05/2026 (ou tapez 0526)" maxlength="7">
+                    <input type="text" id="dateMois" required placeholder="Ex: 05/2026" maxlength="7">
                 </div>
                 
                 <div class="form-group">
@@ -171,7 +170,7 @@
                 </div>
 
                 <button type="submit" id="submitBtn" style="margin-top: 15px;">Enregistrer</button>
-                <button type="button" id="cancelEditBtn" class="btn-cancel" style="display: none;" onclick="resetForm()">Annuler la modification</button>
+                <button type="button" id="cancelEditBtn" class="btn-cancel" style="display: none;" onclick="resetForm()">Annuler</button>
             </form>
             <div id="statusMsg" class="status-msg"></div>
         </div>
@@ -189,30 +188,8 @@
 
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-        // Formate automatiquement la saisie 'MMAAAA' en 'MM/AAAA'
-        function formaterSaisieMois(valeur) {
-            let v = valeur.replace(/\D/g, '');
-            if (v.length === 4) {
-                let mois = v.substr(0, 2);
-                let annee = v.substr(2, 2);
-                let anneeComplete = parseInt(annee) < 50 ? '20' + annee : '19' + annee;
-                return mois + '/' + anneeComplete;
-            }
-            if (v.length === 6) {
-                return v.substr(0, 2) + '/' + v.substr(2, 4);
-            }
-            return valeur;
-        }
-
-        function ajouterMasques() {
-            const filtre = document.getElementById('filtreMois');
-            const dateInput = document.getElementById('dateMois');
-
-            filtre.addEventListener('input', function(e) { e.target.value = formaterSaisieMois(e.target.value); });
-            dateInput.addEventListener('input', function(e) { e.target.value = formaterSaisieMois(e.target.value); });
-            
-            filtre.addEventListener('change', chargerDepenses);
-        }
+        // Événement de changement de mois manuel
+        document.getElementById('filtreMois').addEventListener('change', chargerDepenses);
 
         // Fonction de pré-remplissage
         function preRemplirFacture() {
@@ -283,13 +260,13 @@
                     localData = res.data.map(item => {
                         const valeurs = Array.isArray(item) ? item : Object.values(item);
                         return {
-                            id: valores[0] ? valores[0].toString() : "",
-                            titre: valores[1] ? valores[1].toString() : "Sans titre",
-                            montant: parseFloat(valores[2] || 0),
-                            payeur: valores[3] ? valores[3].toString().trim() : "Inconnu",
-                            date: valores[4] ? valores[4].toString().trim() : "",
-                            statut: valores[5] ? valores[5].toString().trim() : "En attente",
-                            nosplit: valores[6] ? valores[6].toString().trim() : "Non"
+                            id: valeurs[0] ? valeurs[0].toString() : "",
+                            titre: valeurs[1] ? valeurs[1].toString() : "Sans titre",
+                            montant: parseFloat(valeurs[2] || 0),
+                            payeur: valeurs[3] ? valeurs[3].toString().trim() : "Inconnu",
+                            date: valeurs[4] ? valeurs[4].toString().trim() : "",
+                            statut: valeurs[5] ? valeurs[5].toString().trim() : "En attente",
+                            nosplit: valeurs[6] ? valeurs[6].toString().trim() : "Non"
                         };
                     });
 
@@ -322,7 +299,6 @@
                         return;
                     }
 
-                    // On inverse pour voir les plus récents en premier
                     [...dataDuMois].reverse().forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'depense-item';
@@ -433,4 +409,27 @@
             document.getElementById('montant').value = item.montant;
             document.getElementById('dateMois').value = item.date;
             document.getElementById('payeur').value = item.payeur === "Pauline" ? "Pauline" : "Nicolas";
-            document.getElementById('isFacture').checked = (item.nosplit === "Oui" || item.nosplit === 
+            document.getElementById('isFacture').checked = (item.nosplit === "Oui" || item.nosplit === "oui");
+
+            document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
+            document.getElementById('cancelEditBtn').style.display = "block";
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function supprimerDepense(id) {
+            if (!confirm("Voulez-vous vraiment supprimer cette ligne ?")) return;
+            fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "deleteData", id: id }) })
+            .then(() => chargerDepenses());
+        }
+
+        function resetForm() {
+            document.getElementById('formTitle').innerText = "Ajouter une ligne";
+            document.getElementById('editId').value = "";
+            document.getElementById('budgetForm').reset();
+            document.getElementById('dateMois').value = document.getElementById('filtreMois').value;
+            document.getElementById('submitBtn').innerText = "Enregistrer";
+            document.getElementById('cancelEditBtn').style.display = "none";
+        }
+
+        window.onload = function() {
+            // Initialisation 

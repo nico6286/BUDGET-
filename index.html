@@ -230,6 +230,11 @@
                     <label for="montant">Montant (€)</label>
                     <input type="number" id="montant" step="0.01" required placeholder="0.00">
                 </div>
+
+                <div class="form-group">
+                    <label for="date">Date de la dépense</label>
+                    <input type="date" id="date" required>
+                </div>
                 
                 <div class="form-group">
                     <label for="payeur">Qui a payé ?</label>
@@ -261,16 +266,33 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
 
-        // contiendra la liste nettoyée des objets
         let localData = [];
 
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+        // Met la date du jour par défaut dans le calendrier
+        function initDateInput() {
+            const aujourdhui = new Date().toISOString().split('T')[0];
+            document.getElementById('date').value = aujourdhui;
+        }
 
         function formaterDate(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
             if (isNaN(d.getTime())) return dateString;
             return d.toLocaleDateString('fr-FR');
+        }
+
+        // Convertit une date fr (JJ/MM/AAAA) ou ISO en format "AAAA-MM-JJ" pour l'input HTML
+        function formaterPourInputDate(dateString) {
+            if (!dateString) return '';
+            const d = new Date(dateString);
+            if (isNaN(d.getTime())) {
+                const parts = dateString.split('/');
+                if(parts.length === 3) return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                return '';
+            }
+            return d.toISOString().split('T')[0];
         }
 
         document.getElementById('budgetForm').addEventListener('submit', function(e) {
@@ -282,11 +304,16 @@
             msgDiv.style.color = 'var(--secondary-color)';
             msgDiv.innerText = "Synchronisation avec Google Sheets...";
 
+            // Récupère et formate la date sélectionnée en format FR (JJ/MM/AAAA)
+            const dateSaisie = new Date(document.getElementById('date').value);
+            const dateFormatee = dateSaisie.toLocaleDateString('fr-FR');
+
             const payload = {
                 id: editId ? editId : generateID(),
                 titre: document.getElementById('titre').value,
                 montant: parseFloat(document.getElementById('montant').value),
                 payeur: document.getElementById('payeur').value,
+                date: dateFormatee, // Utilise la date choisie
                 noSplit: document.getElementById('noSplit').checked ? "Oui" : "Non"
             };
 
@@ -294,7 +321,6 @@
                 payload.action = "updateData";
             } else {
                 payload.action = "addData";
-                payload.date = new Date().toLocaleDateString('fr-FR');
                 payload.statut = "En attente";
             }
 
@@ -332,10 +358,7 @@
             .then(res => {
                 if(res.result === "success" && res.data.length > 0) {
                     
-                    // CORRECTION RADICALE : On mappe les lignes reçues selon l'index strict de vos colonnes du Sheet
-                    // Colonnes attendues : 0:ID, 1:Titre, 2:Montant, 3:Payeur, 4:Date, 5:Statut, 6:NoSplit
                     localData = res.data.map(item => {
-                        // Si Apps Script renvoie un objet clé/valeur hybride, on extrait ses valeurs sous forme de tableau
                         const valeurs = Array.isArray(item) ? item : Object.values(item);
                         return {
                             id: valeurs[0] ? valeurs[0].toString() : "",
@@ -353,7 +376,6 @@
                     let totalNicolas = 0;
                     let totalPauline = 0;
 
-                    // Calcul de la balance globale
                     localData.forEach(item => {
                         if (item.nosplit !== "Oui" && item.nosplit !== "oui") {
                             if (item.payeur === "Nicolas") totalNicolas += item.montant;
@@ -363,9 +385,16 @@
 
                     calculerVirement(totalNicolas, totalPauline);
 
-                    // Génération de l'affichage inversé (du plus récent au plus ancien)
-                    const copieInversee = [...localData].reverse();
-                    copieInversee.forEach(item => {
+                    // Tri des dépenses chronologiquement (par date) pour l'affichage de l'historique
+                    const localDataTrie = [...localData].sort((a, b) => {
+                        const parseDate = (str) => {
+                            const p = str.split('/');
+                            return p.length === 3 ? new Date(`${p[2]}-${p[1]}-${p[0]}`) : new Date(str);
+                        };
+                        return parseDate(b.date) - parseDate(a.date);
+                    });
+
+                    localDataTrie.forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'depense-item';
                         div.innerHTML = `
@@ -423,6 +452,7 @@
             document.getElementById('editId').value = id;
             document.getElementById('titre').value = item.titre;
             document.getElementById('montant').value = item.montant;
+            document.getElementById('date').value = formaterPourInputDate(item.date);
             document.getElementById('payeur').value = item.payeur === "Pauline" ? "Pauline" : "Nicolas";
             document.getElementById('noSplit').checked = (item.nosplit === "Oui" || item.nosplit === "oui");
 
@@ -462,11 +492,15 @@
             document.getElementById('formTitle').innerText = "Ajouter une dépense";
             document.getElementById('editId').value = "";
             document.getElementById('budgetForm').reset();
+            initDateInput();
             document.getElementById('submitBtn').innerText = "Ajouter la dépense";
             document.getElementById('cancelEditBtn').style.display = "none";
         }
 
-        window.onload = chargerDepenses;
+        window.onload = function() {
+            initDateInput();
+            chargerDepenses();
+        };
     </script>
 </body>
 </html>

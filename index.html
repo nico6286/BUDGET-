@@ -261,6 +261,7 @@
     <script>
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
 
+        // contiendra la liste nettoyée des objets
         let localData = [];
 
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -331,12 +332,20 @@
             .then(res => {
                 if(res.result === "success" && res.data.length > 0) {
                     
-                    // Normalisation de la casse des propriétés
-                    localData = res.data.map(obj => {
-                        return Object.keys(obj).reduce((acc, key) => {
-                            acc[key.toLowerCase()] = obj[key];
-                            return acc;
-                        }, {});
+                    // CORRECTION RADICALE : On mappe les lignes reçues selon l'index strict de vos colonnes du Sheet
+                    // Colonnes attendues : 0:ID, 1:Titre, 2:Montant, 3:Payeur, 4:Date, 5:Statut, 6:NoSplit
+                    localData = res.data.map(item => {
+                        // Si Apps Script renvoie un objet clé/valeur hybride, on extrait ses valeurs sous forme de tableau
+                        const valeurs = Array.isArray(item) ? item : Object.values(item);
+                        return {
+                            id: valeurs[0] ? valeurs[0].toString() : "",
+                            titre: valeurs[1] ? valeurs[1].toString() : "Sans titre",
+                            montant: parseFloat(valeurs[2] || 0),
+                            payeur: valeurs[3] ? valeurs[3].toString().trim() : "Inconnu",
+                            date: valeurs[4] ? valeurs[4].toString() : "",
+                            statut: valeurs[5] ? valeurs[5].toString() : "",
+                            nosplit: valeurs[6] ? valeurs[6].toString().trim() : "Non"
+                        };
                     });
 
                     liste.innerHTML = "";
@@ -344,43 +353,34 @@
                     let totalNicolas = 0;
                     let totalPauline = 0;
 
+                    // Calcul de la balance globale
                     localData.forEach(item => {
-                        const montant = parseFloat(item.montant || 0);
-                        const payeur = item.payeur ? item.payeur.trim() : "";
-                        const noSplit = item.nosplit ? item.nosplit.trim() : "";
-
-                        if (noSplit !== "Oui" && noSplit !== "oui") {
-                            if (payeur === "Nicolas") totalNicolas += montant;
-                            if (payeur === "Pauline") totalPauline += montant;
+                        if (item.nosplit !== "Oui" && item.nosplit !== "oui") {
+                            if (item.payeur === "Nicolas") totalNicolas += item.montant;
+                            if (item.payeur === "Pauline") totalPauline += item.montant;
                         }
                     });
 
                     calculerVirement(totalNicolas, totalPauline);
 
+                    // Génération de l'affichage inversé (du plus récent au plus ancien)
                     const copieInversee = [...localData].reverse();
                     copieInversee.forEach(item => {
-                        const id = item.id || "";
-                        const titre = item.titre || "Sans titre";
-                        const montant = parseFloat(item.montant || 0);
-                        const payeur = item.payeur || "Inconnu";
-                        const dateRaw = item.date || "";
-                        const noSplit = item.nosplit || "";
-
                         const div = document.createElement('div');
                         div.className = 'depense-item';
                         div.innerHTML = `
                             <div class="depense-info">
                                 <span class="depense-titre">
-                                    ${titre} 
-                                    ${(noSplit === "Oui" || noSplit === "oui") ? '<span class="badge-perso">Perso</span>' : ''}
+                                    ${item.titre} 
+                                    ${(item.nosplit === "Oui" || item.nosplit === "oui") ? '<span class="badge-perso">Perso</span>' : ''}
                                 </span>
-                                <span class="depense-meta">${formaterDate(dateRaw)} • Payé par <strong>${payeur}</strong></span>
+                                <span class="depense-meta">${formaterDate(item.date)} • Payé par <strong>${item.payeur}</strong></span>
                             </div>
                             <div class="depense-right">
-                                <span class="depense-montant">${montant.toFixed(2)} €</span>
+                                <span class="depense-montant">${item.montant.toFixed(2)} €</span>
                                 <div class="actions-links">
-                                    <span class="edit-link" onclick="preparerEdition('${id}')">Modifier</span>
-                                    <span class="delete-link" onclick="supprimerDepense('${id}')">Suppr.</span>
+                                    <span class="edit-link" onclick="preparerEdition('${item.id}')">Modifier</span>
+                                    <span class="delete-link" onclick="supprimerDepense('${item.id}')">Suppr.</span>
                                 </div>
                             </div>
                         `;
@@ -421,12 +421,10 @@
 
             document.getElementById('formTitle').innerText = "Modifier la dépense";
             document.getElementById('editId').value = id;
-            document.getElementById('titre').value = item.titre || "";
-            document.getElementById('montant').value = item.montant || "";
-            document.getElementById('payeur').value = item.payeur || "Nicolas";
-            
-            const noSplitVal = item.nosplit || "";
-            document.getElementById('noSplit').checked = (noSplitVal === "Oui" || noSplitVal === "oui");
+            document.getElementById('titre').value = item.titre;
+            document.getElementById('montant').value = item.montant;
+            document.getElementById('payeur').value = item.payeur === "Pauline" ? "Pauline" : "Nicolas";
+            document.getElementById('noSplit').checked = (item.nosplit === "Oui" || item.nosplit === "oui");
 
             document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
             document.getElementById('cancelEditBtn').style.display = "block";

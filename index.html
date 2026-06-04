@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comptes Nicolas & Pauline</title>
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#121212">
+    
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --accent-color: #3b82f6;
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+            --nicolas-color: #06b6d4;
+            --pauline-color: #f97316;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 15px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        h1, h2, h3 { margin-bottom: 10px; margin-top: 20px;}
+        .balance-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+            border-left: 5px solid var(--accent-color);
+        }
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .form-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #2a2a2a;
+            color: white;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+        .radio-btn {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            background-color: #2a2a2a;
+            border-radius: 6px;
+            cursor: pointer;
+            border: 2px solid transparent;
+        }
+        .radio-btn.active-nic { border-color: var(--nicolas-color); background-color: rgba(6, 182, 212, 0.1); }
+        .radio-btn.active-pau { border-color: var(--pauline-color); background-color: rgba(249, 115, 22, 0.1); }
+        button {
+            width: 100%;
+            padding: 12px;
+            border-radius: 6px;
+            border: none;
+            background-color: var(--accent-color);
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-bottom: 10px;
+        }
+        button.secondary {
+            background-color: #333;
+            color: #eee;
+        }
+        button.danger {
+            background-color: #991b1b;
+        }
+        .quick-actions-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .quick-actions-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .transaction-item {
+            background-color: var(--card-bg);
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .tx-info { display: flex; flex-direction: column; }
+        .tx-title { font-weight: bold; }
+        .tx-date { font-size: 0.8rem; color: var(--text-muted); }
+        .tx-meta { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: #333; width: fit-content; margin-top: 4px;}
+        .tx-amount { font-weight: bold; }
+        .tx-actions { display: flex; align-items: center; gap: 15px; }
+        .tx-edit { color: #3b82f6; cursor: pointer; font-size: 1.1rem; }
+        .tx-delete { color: #ef4444; cursor: pointer; font-size: 1.4rem; }
+        .deferred { border-left: 3px solid #eab308; }
+        .no-split-tag { background: #991b1b; color: white; padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; margin-left: 5px; vertical-align: middle;}
+        
+        .history-month-card {
+            background-color: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            padding: 12px;
+        }
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .history-details {
+            margin-top: 10px;
+            padding-top: 10px;
+            border-top: 1px dashed #333;
+        }
+        .history-tx-item {
+            font-size: 0.85rem;
+            color: #ccc;
+            padding: 6px 0;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #222;
+        }
+        .history-tx-item:last-child { border: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="balance-card">
+        <h2>Virement de Fin de Mois</h2>
+        <div class="balance-amount" id="balanceDisplay">Calcul en cours...</div>
+        <p id="balanceInstruction" style="color: var(--text-muted); margin: 0;"></p>
+    </div>
+
+    <div class="quick-actions-card">
+        <label>Configuration des charges fixes du couple</label>
+        <div class="quick-actions-row">
+            <input type="number" step="0.01" id="quickFactureAmount" value="1918.42" style="flex: 1;">
+            <button class="secondary" onclick="addQuickFacture()" style="margin: 0; flex: 2;">⚡ Injecter Factures</button>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <h3 id="formTitle" style="margin-top:0;">Nouvelle Dépense Commune</h3>
+        <input type="hidden" id="editingId" value="">
+        
+        <div class="form-group">
+            <label>Nom de la dépense</label>
+            <input type="text" id="txTitle" placeholder="Ex: Courses, Tapis, Shein...">
+        </div>
+        <div class="form-group">
+            <label>Montant (€)</label>
+            <input type="number" step="0.01" id="txAmount" placeholder="0.00">
+        </div>
+        <div class="form-group">
+            <label>Qui a payé / Avancé l'argent ?</label>
+            <div class="radio-group">
+                <div class="radio-btn" id="btnNic" onclick="setPayeur('Nicolas')">Nicolas</div>
+                <div class="radio-btn" id="btnPau" onclick="setPayeur('Pauline')">Pauline</div>
+            </div>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
+            <input type="checkbox" id="txNoSplit" style="transform: scale(1.3);">
+            <label for="txNoSplit" style="margin:0;">🚨 Ne pas diviser (Je dois 100% de cette somme)</label>
+        </div>
+        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+            <input type="checkbox" id="txDeferred" style="transform: scale(1.3);">
+            <label for="txDeferred" style="margin:0;">⏳ Différé (À intégrer au mois prochain)</label>
+        </div>
+        <button id="btnSubmit" onclick="saveTransaction()">Enregistrer la dépense</button>
+        <button id="btnCancelEdit" class="secondary" onclick="cancelEdit()" style="display:none;">Annuler la modification</button>
+    </div>
+
+    <h2>Dépenses du mois en cours</h2>
+    <div id="currentList"></div>
+
+    <h2>Dépenses en différé (Mois Suivant)</h2>
+    <div id="deferredList"></div>
+
+    <hr style="border-color: #333; margin: 30px 0;">
+    <button class="danger" onclick="archiveAndResetMonth()">🔄 Clôturer et Archiver le Mois</button>
+
+    <h2 style="margin-top: 40px; color: var(--accent-color);">📁 Historique des mois clos</h2>
+    <div id="historyList"></div>
+
+    <hr style="border-color: #222; margin: 40px 0 20px 0;">
+    <button class="secondary" style="background-color: #1a1a1a; color: #555; font-size: 0.8rem;" onclick="clearAllHistory()">⚠️ Effacer tout l'historique</button>
+</div>
+
+<script>
+    let currentPayeur = 'Nicolas';
+    let transactions = JSON.parse(localStorage.getItem('couple_txs_final')) || [];
+    let history = JSON.parse(localStorage.getItem('couple_history_final')) || [];
+    let calculatedOwedGlobal = 0; 
+
+    const savedFactureAmount = localStorage.getItem('quick_facture_amount');
+    if (savedFactureAmount) {
+        document.getElementById('quickFactureAmount').value = savedFactureAmount;
+    }
+
+    function setPayeur(name) {
+        currentPayeur = name;
+        document.getElementById('btnNic').className = 'radio-btn' + (name === 'Nicolas' ? ' active-nic' : '');
+        document.getElementById('btnPau').className = 'radio-btn' + (name === 'Pauline' ? ' active-pau' : '');
+    }
+    setPayeur('Nicolas');
+
+    function saveTransaction() {
+        const title = document.getElementById('txTitle').value.trim();
+        const amount = parseFloat(document.getElementById('txAmount').value);
+        const isDeferred = document.getElementById('txDeferred').checked;
+        const noSplit = document.getElementById('txNoSplit').checked;
+        const editingId = document.getElementById('editingId').value;
+
+        if (!title || isNaN(amount) || amount <= 0) return alert('Veuillez remplir le nom et le montant.');
+
+        if (editingId) {
+            transactions = transactions.map(t => {
+                if (t.id == editingId) {
+                    return { ...t, title, amount, payeur: currentPayeur, deferred: isDeferred, noSplit };
+                }
+                return t;
+            });
+            cancelEdit();
+        } else {
+            transactions.push({
+                id: Date.now(),
+                title: title,
+                amount: amount,
+                payeur: currentPayeur,
+                deferred: isDeferred,
+                noSplit: noSplit,
+                date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
+            });
+        }
+
+        updateApp();
+        clearForm();
+    }
+
+    function addQuickFacture() {
+        const amount = parseFloat(document.getElementById('quickFactureAmount').value);
+        if (isNaN(amount) || amount <= 0) return alert('Veuillez entrer un montant de facture valide.');
+        
+        localStorage.setItem('quick_facture_amount', amount);
+
+        transactions.push({
+            id: Date.now(),
+            title: "Factures Fixes",
+            amount: amount,
+            payeur: "Pauline",
+            deferred: false,
+            noSplit: false,
+            date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
+        });
+        updateApp();
+    }
+
+    function editTx(id) {
+        const tx = transactions.find(t => t.id === id);
+        if (!tx) return;
+
+        document.getElementById('formTitle').innerText = "✏️ Modifier la dépense";
+        document.getElementById('editingId').value = tx.id;
+        document.getElementById('txTitle').value = tx.title;
+        document.getElementById('txAmount').value = tx.amount;
+        document.getElementById('txDeferred').checked = tx.deferred;
+        document.getElementById('txNoSplit').checked = tx.noSplit || false;
+        setPayeur(tx.payeur);
+
+        document.getElementById('btnSubmit').innerText = "Mettre à jour";
+        document.getElementById('btnCancelEdit').style.display = "block";
+        document.getElementById('txTitle').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+        document.getElementById('formTitle').innerText = "Nouvelle Dépense Commune";
+        document.getElementById('editingId').value = "";
+        document.getElementById('btnSubmit').innerText = "Enregistrer la dépense";
+        document.getElementById('btnCancelEdit').style.display = "none";
+        clearForm();
+    }
+
+    function clearForm() {
+        document.getElementById('txTitle').value = '';
+        document.getElementById('txAmount').value = '';
+        document.getElementById('txDeferred').checked = false;
+        document.getElementById('txNoSplit').checked = false;
+    }
+
+    function deleteTx(id) {
+        if(confirm("Supprimer cette dépense ?")) {
+            transactions = transactions.filter(t => t.id !== id);
+            updateApp();
+            if(document.getElementById('editingId').value == id) cancelEdit();
+        }
+    }
+
+    function archiveAndResetMonth() {
+        const currentTxs = transactions.filter(t => !t.deferred);
+        if (currentTxs.length === 0) return alert("Il n'y a aucune dépense courante à archiver.");
+
+        const nomMois = prompt("Sous quel nom archiver ce mois ? (Ex: Juin 2026)", "");
+        if (!nomMois) return;
+
+        let texteInstruction = "Comptes équilibrés";
+        if (calculatedOwedGlobal > 0) texteInstruction = `Nicolas a versé ${calculatedOwedGlobal.toFixed(2)}€ à Pauline`;
+        if (calculatedOwedGlobal < 0) texteInstruction = `Pauline a versé ${Math.abs(calculatedOwedGlobal).toFixed(2)}€ à Nicolas`;
+
+        const archiveBlock = {
+            id: Date.now(),
+            monthName: nomMois,
+            instruction: texteInstruction,
+            items: currentTxs.map(t => ({
+                title: t.title,
+                amount: t.amount,
+                payeur: t.payeur,
+                part: t.noSplit ? t.amount : (t.amount / 2),
+                noSplit: t.noSplit
+            }))
+        };
+
+        history.unshift(archiveBlock); 
+        localStorage.setItem('couple_history_final', JSON.stringify(history));
+
+        transactions = transactions.filter(t => t.deferred).map(t => ({...t, deferred: false}));
+        
+        updateApp();
+        cancelEdit();
+        alert(`Le mois de ${nomMois} a bien été archivé !`);
+    }
+
+    function deleteHistoryMonth(id) {
+        if(confirm("Supprimer ce mois de l'historique ?")) {
+            history = history.filter(h => h.id !== id);
+            localStorage.setItem('couple_history_final', JSON.stringify(history));
+            updateApp();
+        }
+    }
+
+    function toggleHistoryDetails(id) {
+        const el = document.getElementById(`history-details-${id}`);
+        if(el.style.display === 'none') {
+            el.style.display = 'block';
+        } else {
+            el.style.display = 'none';
+        }
+    }
+
+    function clearAllHistory() {
+        if(confirm("⚠️ Êtes-vous sûr de vouloir EFFACER TOUT l'historique ?")) {
+            history = [];
+            localStorage.setItem('couple_history_final', JSON.stringify(history));
+            updateApp();
+        }
+    }
+
+    function updateApp() {
+        localStorage.setItem('couple_txs_final', JSON.stringify(transactions));
+        
+        const currentList = document.getElementById('currentList');
+        const deferredList = document.getElementById('deferredList');
+        currentList.innerHTML = '';
+        deferredList.innerHTML = '';
+
+        let nicolasOwes = 0; 
+
+        transactions.forEach(t => {
+            const partDue = t.noSplit ? t.amount : (t.amount / 2);
+            
+            if (!t.deferred) {
+                if (t.payeur === 'Pauline') {
+                    nicolasOwes += partDue; 
+                } else {
+                    nicolasOwes -= partDue; 
+                }
+            }
+
+            const html = `
+                <div class="transaction-item ${t.deferred ? 'deferred' : ''}">
+                    <div class="tx-info">
+                        <span class="tx-title">${t.title} ${t.noSplit ? '<span class="no-split-tag">100%</span>' : ''}</span>
+                        <span class="tx-date">${t.date} · Total: ${t.amount.toFixed(2)}€</span>
+                        <span class="tx-meta" style="color: ${t.payeur === 'Nicolas' ? 'var(--nicolas-color)' : 'var(--nicolas-color)' === '#06b6d4' && t.payeur === 'Pauline' ? 'var(--pauline-color)' : 'var(--pauline-color)'}">Payé par ${t.payeur} (Impact: ${partDue.toFixed(2)}€)</span>
+                    </div>
+                    <div class="tx-actions">
+                        <span class="tx-amount">${partDue.toFixed(2)} €</span>
+                        <span class="tx-edit" onclick="editTx(${t.id})">✏️</span>
+                        <span class="tx-delete" onclick="deleteTx(${t.id})">×</span>
+                    </div>
+                </div>
+            `;
+
+            if (t.deferred) {
+                deferredList.innerHTML += html;
+            } else {
+                currentList.innerHTML += html;
+            }
+        });
+
+        calculatedOwedGlobal = nicolasOwes;
+
+        const display = document.getElementById('balanceDisplay');
+        const instruction = document.getElementById('balanceInstruction');
+
+        if (nicolasOwes > 0) {
+            display.innerText = `${nicolasOwes.toFixed(2)} €`;
+            display.style.color = "var(--pauline-color)";
+            instruction.innerText = "Nicolas doit verser cette somme à Pauline";
+        } else if (nicolasOwes < 0) {
+            display.innerText = `${Math.abs(nicolasOwes).toFixed(2)} €`;
+            display.style.color = "var(--nicolas-color)";
+            instruction.innerText = "Pauline doit verser cette somme à Nicolas";
+        } else {
+            display.innerText = "0.00 €";
+            display.style.color = "var(--text-color)";
+            instruction.innerText = "Les comptes sont parfaits !";
+        }
+
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = '';
+        
+        if (history.length === 0) {
+            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pour le moment.</p>';
+        } else {
+            history.forEach(h => {
+                let txsHtml = '';
+                h.items.forEach(item => {
+                    txsHtml += `
+                        <div class="history-tx-item">
+                            <span>• ${item.title} (Payé par ${item.payeur}) ${item.noSplit ? '<b>[100%]</b>' : ''}</span>
+                            <span>Total: ${item.amount.toFixed(2)}€ → <b>Part: ${item.part.toFixed(2)}€</b></span>
+                        </div>
+                    `;
+                });
+
+                historyList.innerHTML += `
+                    <div class="history-month-card">
+                        <div class="history-header">
+                            <div onclick="toggleHistoryDetails(${h.id})" style="flex:1;">
+                                <span style="color: var(--accent-color);">▼</span> <strong>${h.monthName}</strong>
+                                <div style="font-size:0.85rem; color:#aaa; margin-top:4px;">💰 ${h.instruction}</div>
+                            </div>
+                            <span class="tx-delete" onclick="deleteHistoryMonth(${h.id})" style="font-size:1.1rem; margin-left:10px;">🗑️</span>
+                        </div>
+                        <div id="history-details-${h.id}" class="history-details" style="display: none;">
+                            ${txsHtml}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+
+    updateApp();
+</script>
+</body>
+</html>

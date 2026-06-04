@@ -1,6 +1,11 @@
-/* ── Budget Couple — Service Worker ── */
-const CACHE_NAME = "budget-couple-v1";
-const ASSETS = ["./index.html", "./manifest.json"];
+/* ── Budget Couple — Service Worker Révisé ── */
+const CACHE_NAME = "budget-couple-v2";
+const ASSETS = [
+  "./index.html", 
+  "./manifest.json",
+  "./icon-192.png",
+  "./icon-512.png"
+];
 
 self.addEventListener("install", e => {
   e.waitUntil(
@@ -21,7 +26,6 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  // Ne jamais intercepter les appels vers Google Apps Script
   if (e.request.url.includes("script.google.com")) return;
 
   e.respondWith(

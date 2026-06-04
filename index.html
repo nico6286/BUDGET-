@@ -667,7 +667,6 @@ async function apiCall(payload) {
 function parseDataResponse(raw) {
   if (Array.isArray(raw)) {
     if (raw.length === 0) return [];
-    // Si c'est déjà un tableau de lignes brutes, on arrête l'extraction ici !
     if (Array.isArray(raw[0])) return raw; 
     
     if (raw[0] && typeof raw[0] === "object") {
@@ -877,7 +876,8 @@ function resetForm() {
   btnAnnuler.style.display = "none";
 }
 
-function abrirEdition(id) {
+/* ── FONCTION CORRIGÉE ICI : ouvrirEdition (et non abrirEdition) ── */
+function ouvrirEdition(id) {
   const row = allData.find(r => String(rowVals(r)[0]) === String(id));
   if (!row) return;
   const r = rowVals(row);
@@ -956,7 +956,7 @@ async function supprimerDepense(id) {
   }
 }
 
-/* ── PARALLÉLISATION DE LA CLÔTURE POUR ÉVITER LES TIMEOUTS ── */
+/* ── CORRECTION DU VIRMENT : TRAITEMENT SÉQUENTIEL POUR ÉVITER LE CRASH CORS ── */
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
@@ -965,9 +965,10 @@ btnVirementFait.addEventListener("click", async () => {
 
   setLoading(true);
   try {
-    const misesAJour = depMois.map(row => {
+    // Une par une pour respecter les limites de requêtes de Google Apps Script
+    for (const row of depMois) {
       const r = rowVals(row);
-      return apiCall({
+      await apiCall({
         action:  "updateData",
         id:      r[0],
         titre:   r[1],
@@ -977,14 +978,13 @@ btnVirementFait.addEventListener("click", async () => {
         noSplit: r[6] || "Non",
         statut
       });
-    });
+    }
 
-    await Promise.all(misesAJour);
     showToast("Virement enregistré ✔", "success");
     await chargerDonnees(false);
   } catch (e) {
     console.error(e);
-    showToast("Erreur lors de la mise à jour", "error");
+    showToast("Erreur lors de la mise à jour (CORS/Throttling)", "error");
   } finally {
     setLoading(false);
   }

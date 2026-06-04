@@ -3,447 +3,282 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Comptes Nicolas & Pauline</title>
-    
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#121212">
-    <link rel="manifest" href="manifest.json">
-    
+    <title>Budget Couple</title>
     <style>
         :root {
             --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --accent-color: #3b82f6;
-            --text-color: #ffffff;
-            --text-muted: #aaaaaa;
-            --nicolas-color: #06b6d4;
-            --pauline-color: #f97316;
+            --surface-color: #1e1e1e;
+            --primary-color: #bb86fc;
+            --secondary-color: #03dac6;
+            --text-color: #e0e0e0;
+            --error-color: #cf6679;
+            --border-color: #333333;
         }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
             margin: 0;
-            padding: 15px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .container { max-width: 500px; margin: 0 auto; }
-        h1, h2, h3 { margin-bottom: 10px; margin-top: 20px;}
-        .balance-card {
-            background-color: var(--card-bg);
+
+        .container {
+            width: 100%;
+            max-width: 500px;
+        }
+
+        h1, h2 {
+            text-align: center;
+            color: var(--primary-color);
+        }
+
+        .card {
+            background-color: var(--surface-color);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
             padding: 20px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
             margin-bottom: 20px;
-            border-left: 5px solid var(--accent-color);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-        .balance-amount { font-size: 2rem; font-weight: bold; margin: 10px 0; }
-        .form-card { background-color: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: var(--text-muted); font-size: 0.9rem; }
-        input[type="text"], input[type="number"], select {
-            width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #333;
-            background-color: #2a2a2a; color: white; box-sizing: border-box; font-size: 1rem;
+
+        .form-group {
+            margin-bottom: 15px;
         }
-        .radio-group { display: flex; gap: 10px; }
-        .radio-btn {
-            flex: 1; text-align: center; padding: 10px; background-color: #2a2a2a;
-            border-radius: 6px; cursor: pointer; border: 2px solid transparent;
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+            color: #aaa;
         }
-        .radio-btn.active-nic { border-color: var(--nicolas-color); background-color: rgba(6, 182, 212, 0.1); }
-        .radio-btn.active-pau { border-color: var(--pauline-color); background-color: rgba(249, 115, 22, 0.1); }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            box-sizing: border-box;
+            background-color: #2c2c2c;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-color);
+            font-size: 1rem;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .checkbox-group input {
+            width: auto;
+        }
+
         button {
-            width: 100%; padding: 12px; border-radius: 6px; border: none;
-            background-color: var(--accent-color); color: white; font-weight: bold;
-            font-size: 1rem; cursor: pointer; margin-bottom: 10px;
+            width: 100%;
+            padding: 14px;
+            background-color: var(--primary-color);
+            border: none;
+            border-radius: 6px;
+            color: #121212;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
         }
-        button.secondary { background-color: #333; color: #eee; }
-        button.danger { background-color: #991b1b; }
-        .quick-actions-card { background-color: var(--card-bg); border-radius: 12px; padding: 15px; margin-bottom: 20px; }
-        .quick-actions-row { display: flex; gap: 10px; align-items: center; }
-        .transaction-item {
-            background-color: var(--card-bg); padding: 12px; border-radius: 8px;
-            margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center;
+
+        button:active {
+            background-color: #9a67ea;
         }
-        .tx-info { display: flex; flex-direction: column; }
-        .tx-title { font-weight: bold; }
-        .tx-date { font-size: 0.8rem; color: var(--text-muted); }
-        .tx-meta { font-size: 0.8rem; padding: 2px 6px; border-radius: 4px; background: #333; width: fit-content; margin-top: 4px;}
-        .tx-amount { font-weight: bold; }
-        .tx-actions { display: flex; align-items: center; gap: 15px; }
-        .tx-edit { color: #3b82f6; cursor: pointer; font-size: 1.1rem; }
-        .tx-delete { color: #ef4444; cursor: pointer; font-size: 1.4rem; }
-        .deferred { border-left: 3px solid #eab308; }
-        .no-split-tag { background: #991b1b; color: white; padding: 1px 4px; border-radius: 3px; font-size: 0.7rem; margin-left: 5px; vertical-align: middle;}
-        
-        .history-month-card { background-color: #1a1a1a; border: 1px solid #333; border-radius: 8px; margin-bottom: 15px; padding: 12px; }
-        .history-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; }
-        .history-details { margin-top: 10px; padding-top: 10px; border-top: 1px dashed #333; }
-        .history-tx-item { font-size: 0.85rem; color: #ccc; padding: 6px 0; display: flex; justify-content: space-between; border-bottom: 1px solid #222; }
-        .history-tx-item:last-child { border: none; }
-        .sync-status { text-align: center; font-size: 0.8rem; color: #eab308; margin-bottom: 10px; font-style: italic; }
+
+        .btn-secondary {
+            background-color: transparent;
+            border: 1px solid var(--secondary-color);
+            color: var(--secondary-color);
+            margin-top: 10px;
+        }
+
+        .status-msg {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+
+        /* Liste des dépenses */
+        .depense-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .depense-item:last-child {
+            border-bottom: none;
+        }
+
+        .depense-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .depense-titre {
+            font-weight: bold;
+        }
+
+        .depense-meta {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .depense-montant {
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="syncStatus" class="sync-status">🔄 Connexion à Home Assistant...</div>
-
-    <div class="balance-card">
-        <h2>Virement de Fin de Mois</h2>
-        <div class="balance-amount" id="balanceDisplay">...</div>
-        <p id="balanceInstruction" style="color: var(--text-muted); margin: 0;"></p>
-    </div>
-
-    <button class="secondary" onclick="pullFromHA()">🔄 Forcer la synchronisation</button>
-
-    <div class="quick-actions-card">
-        <label>Configuration des charges fixes du couple</label>
-        <div class="quick-actions-row">
-            <input type="number" step="0.01" id="quickFactureAmount" value="1918.42" style="flex: 1;">
-            <button class="secondary" onclick="addQuickFacture()" style="margin: 0; flex: 2;">⚡ Injecter Factures</button>
-        </div>
-    </div>
-
-    <div class="form-card">
-        <h3 id="formTitle" style="margin-top:0;">Nouvelle Dépense Commune</h3>
-        <input type="hidden" id="editingId" value="">
+    <div class="container">
+        <h1>Budget Couple</h1>
         
-        <div class="form-group">
-            <label>Nom de la dépense</label>
-            <input type="text" id="txTitle" placeholder="Ex: Courses, Tapis, Shein...">
-        </div>
-        <div class="form-group">
-            <label>Montant (€)</label>
-            <input type="number" step="0.01" id="txAmount" placeholder="0.00">
-        </div>
-        <div class="form-group">
-            <label>Qui a payé / Avancé l'argent ?</label>
-            <div class="radio-group">
-                <div class="radio-btn" id="btnNic" onclick="setPayeur('Nicolas')">Nicolas</div>
-                <div class="radio-btn" id="btnPau" onclick="setPayeur('Pauline')">Pauline</div>
-            </div>
-        </div>
-        <div class="form-group" style="display:flex; align-items:center; gap:10px; margin-bottom: 10px;">
-            <input type="checkbox" id="txNoSplit" style="transform: scale(1.3);">
-            <label for="txNoSplit" style="margin:0;">🚨 Ne pas diviser (Je dois 100% de cette somme)</label>
-        </div>
-        <div class="form-group" style="display:flex; align-items:center; gap:10px;">
-            <input type="checkbox" id="txDeferred" style="transform: scale(1.3);">
-            <label for="txDeferred" style="margin:0;">⏳ Différé (À intégrer au mois prochain)</label>
-        </div>
-        <button id="btnSubmit" onclick="saveTransaction()">Enregistrer la dépense</button>
-        <button id="btnCancelEdit" class="secondary" onclick="cancelEdit()" style="display:none;">Annuler la modification</button>
-    </div>
-
-    <h2>Dépenses du mois en cours</h2>
-    <div id="currentList"></div>
-
-    <h2>Dépenses en différé (Mois Suivant)</h2>
-    <div id="deferredList"></div>
-
-    <hr style="border-color: #333; margin: 30px 0;">
-    <button class="danger" onclick="archiveAndResetMonth()">🔄 Clôturer et Archiver le Mois</button>
-
-    <h2 style="margin-top: 40px; color: var(--accent-color);">📁 Historique des mois clos</h2>
-    <div id="historyList"></div>
-
-    <hr style="border-color: #222; margin: 40px 0 20px 0;">
-    <button class="secondary" style="background-color: #1a1a1a; color: #555; font-size: 0.8rem;" onclick="clearAllHistory()">⚠️ Effacer tout l'historique</button>
-</div>
-
-<script>
-    // CONFIGURATION HOME ASSISTANT LOCALE
-    const HA_URL = "http://192.168.1.120:8123"; // Mettez l'IP locale ou votre adresse NabuCasa/externe
-    const HA_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJlZjg0OGZkOGE5YzE0YWVhOGZmMjc2ZGZhNDBiODJkNyIsImlhdCI6MTc4MDU4ODA5MywiZXhwIjoyMDk1OTQ4MDkzfQ.rFBvKogu3GuSKm4oVKM7pi5BDfgXBRti61_u8hGXIWQ";
-
-    let currentPayeur = 'Nicolas';
-    let transactions = [];
-    let history = [];
-    let calculatedOwedGlobal = 0;
-
-    const savedFactureAmount = localStorage.getItem('quick_facture_amount');
-    if (savedFactureAmount) {
-        document.getElementById('quickFactureAmount').value = savedFactureAmount;
-    }
-
-    function setStatus(text, isError = false) {
-        const el = document.getElementById('syncStatus');
-        el.innerText = text;
-        el.style.color = isError ? "#ef4444" : "#eab308";
-        if(!isError && text.includes('✅')) {
-            setTimeout(() => { el.innerText = "🏠 Maison synchronisée (MariaDB)"; }, 3000);
-        }
-    }
-
-    async function pullFromHA() {
-        setStatus("🔄 Synchro Home Assistant...");
-        try {
-            const res = await fetch(`${HA_URL}/api/states/input_text.budget_couple`, {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${HA_TOKEN}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!res.ok) throw new Error();
-            const stateData = await res.json();
-            
-            if (stateData.state && stateData.state !== "unknown" && stateData.state !== "initial") {
-                const decoded = JSON.parse(stateData.state);
-                transactions = decoded.transactions || [];
-                history = decoded.history || [];
-            }
-            updateLocalDOM();
-            setStatus("✅ Données à jour !");
-        } catch (e) {
-            setStatus("❌ Erreur de connexion à Home Assistant", true);
-            transactions = JSON.parse(localStorage.getItem('couple_txs_final')) || [];
-            history = JSON.parse(localStorage.getItem('couple_history_final')) || [];
-            updateLocalDOM();
-        }
-    }
-
-    async function pushToHA() {
-        setStatus("📤 Sauvegarde à la maison...");
-        localStorage.setItem('couple_txs_final', JSON.stringify(transactions));
-        localStorage.setItem('couple_history_final', JSON.stringify(history));
-
-        const payload = JSON.stringify({ transactions, history });
-
-        try {
-            await fetch(`${HA_URL}/api/services/input_text/set_value`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${HA_TOKEN}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    entity_id: "input_text.budget_couple",
-                    value: payload
-                })
-            });
-            setStatus("✅ Sauvegardé à la maison !");
-        } catch (e) {
-            setStatus("⚠️ Sauvegardé uniquement sur le téléphone", true);
-        }
-    }
-
-    function setPayeur(name) {
-        currentPayeur = name;
-        document.getElementById('btnNic').className = 'radio-btn' + (name === 'Nicolas' ? ' active-nic' : '');
-        document.getElementById('btnPau').className = 'radio-btn' + (name === 'Pauline' ? ' active-pau' : '');
-    }
-    setPayeur('Nicolas');
-
-    async function saveTransaction() {
-        const title = document.getElementById('txTitle').value.trim();
-        const amount = parseFloat(document.getElementById('txAmount').value);
-        const isDeferred = document.getElementById('txDeferred').checked;
-        const noSplit = document.getElementById('txNoSplit').checked;
-        const editingId = document.getElementById('editingId').value;
-
-        if (!title || isNaN(amount) || amount <= 0) return alert('Veuillez remplir le nom et le montant.');
-
-        if (editingId) {
-            transactions = transactions.map(t => {
-                if (t.id == editingId) return { ...t, title, amount, payeur: currentPayeur, deferred: isDeferred, noSplit };
-                return t;
-            });
-            cancelEdit();
-        } else {
-            transactions.push({
-                id: Date.now(),
-                title: title,
-                amount: amount,
-                payeur: currentPayeur,
-                deferred: isDeferred,
-                noSplit: noSplit,
-                date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
-            });
-        }
-
-        updateLocalDOM();
-        clearForm();
-        await pushToHA();
-    }
-
-    async function addQuickFacture() {
-        const amount = parseFloat(document.getElementById('quickFactureAmount').value);
-        if (isNaN(amount) || amount <= 0) return alert('Veuillez entrer un montant de facture valide.');
-        
-        localStorage.setItem('quick_facture_amount', amount);
-
-        transactions.push({
-            id: Date.now(),
-            title: "Factures Fixes",
-            amount: amount,
-            payeur: "Pauline",
-            deferred: false,
-            noSplit: false,
-            date: new Date().toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})
-        });
-        updateLocalDOM();
-        await pushToHA();
-    }
-
-    function editTx(id) {
-        const tx = transactions.find(t => t.id === id);
-        if (!tx) return;
-
-        document.getElementById('formTitle').innerText = "✏️ Modifier la dépense";
-        document.getElementById('editingId').value = tx.id;
-        document.getElementById('txTitle').value = tx.title;
-        document.getElementById('txAmount').value = tx.amount;
-        document.getElementById('txDeferred').checked = tx.deferred;
-        document.getElementById('txNoSplit').checked = tx.noSplit || false;
-        setPayeur(tx.payeur);
-
-        document.getElementById('btnSubmit').innerText = "Mettre à jour";
-        document.getElementById('btnCancelEdit').style.display = "block";
-        document.getElementById('txTitle').scrollIntoView({ behavior: 'smooth' });
-    }
-
-    function cancelEdit() {
-        document.getElementById('formTitle').innerText = "Nouvelle Dépense Commune";
-        document.getElementById('editingId').value = "";
-        document.getElementById('btnSubmit').innerText = "Enregistrer la dépense";
-        document.getElementById('btnCancelEdit').style.display = "none";
-        clearForm();
-    }
-
-    function clearForm() {
-        document.getElementById('txTitle').value = '';
-        document.getElementById('txAmount').value = '';
-        document.getElementById('txDeferred').checked = false;
-        document.getElementById('txNoSplit').checked = false;
-    }
-
-    async function deleteTx(id) {
-        if(confirm("Supprimer cette dépense ?")) {
-            transactions = transactions.filter(t => t.id !== id);
-            updateLocalDOM();
-            if(document.getElementById('editingId').value == id) cancelEdit();
-            await pushToHA();
-        }
-    }
-
-    async function archiveAndResetMonth() {
-        const currentTxs = transactions.filter(t => !t.deferred);
-        if (currentTxs.length === 0) return alert("Il n'y a aucune dépense courante à archiver.");
-
-        const nomMois = prompt("Sous quel nom archiver ce mois ? (Ex: Juin 2026)", "");
-        if (!nomMois) return;
-
-        let texteInstruction = "Comptes équilibrés";
-        if (calculatedOwedGlobal > 0) texteInstruction = `Nicolas a versé ${calculatedOwedGlobal.toFixed(2)}€ à Pauline`;
-        if (calculatedOwedGlobal < 0) texteInstruction = `Pauline a versé ${Math.abs(calculatedOwedGlobal).toFixed(2)}€ à Nicolas`;
-
-        const archiveBlock = {
-            id: Date.now(),
-            monthName: nomMois,
-            instruction: texteInstruction,
-            items: currentTxs.map(t => ({
-                title: t.title,
-                amount: t.amount,
-                payeur: t.payeur,
-                part: t.noSplit ? t.amount : (t.amount / 2),
-                noSplit: t.noSplit
-            }))
-        };
-
-        history.unshift(archiveBlock); 
-        transactions = transactions.filter(t => t.deferred).map(t => ({...t, deferred: false}));
-        
-        updateLocalDOM();
-        cancelEdit();
-        await pushToHA();
-        alert(`Le mois de ${nomMois} a bien été archivé !`);
-    }
-
-    async function deleteHistoryMonth(id) {
-        if(confirm("Supprimer ce mois de l'historique ?")) {
-            history = history.filter(h => h.id !== id);
-            updateLocalDOM();
-            await pushToHA();
-        }
-    }
-
-    function toggleHistoryDetails(id) {
-        const el = document.getElementById(`history-details-${id}`);
-        el.style.display = el.style.display === 'none' ? 'block' : 'none';
-    }
-
-    async function clearAllHistory() {
-        if(confirm("⚠️ Êtes-vous sûr de vouloir EFFACER TOUT l'historique ?")) {
-            history = [];
-            updateLocalDOM();
-            await pushToHA();
-        }
-    }
-
-    function updateLocalDOM() {
-        const currentList = document.getElementById('currentList');
-        const deferredList = document.getElementById('deferredList');
-        currentList.innerHTML = '';
-        deferredList.innerHTML = '';
-
-        let nicolasOwes = 0; 
-
-        transactions.forEach(t => {
-            const partDue = t.noSplit ? t.amount : (t.amount / 2);
-            if (!t.deferred) {
-                if (t.payeur === 'Pauline') nicolasOwes += partDue; 
-                else nicolasOwes -= partDue;
-            }
-
-            const html = `
-                <div class="transaction-item ${t.deferred ? 'deferred' : ''}">
-                    <div class="tx-info">
-                        <span class="tx-title">${t.title} ${t.noSplit ? '<span class="no-split-tag">100%</span>' : ''}</span>
-                        <span class="tx-date">${t.date} · Total: ${t.amount.toFixed(2)}€</span>
-                        <span class="tx-meta" style="color: ${t.payeur === 'Nicolas' ? 'var(--nicolas-color)' : 'var(--pauline-color)'}">Payé par ${t.payeur} (Impact: ${partDue.toFixed(2)}€)</span>
-                    </div>
-                    <div class="tx-actions">
-                        <span class="tx-amount">${partDue.toFixed(2)} €</span>
-                        <span class="tx-edit" onclick="editTx(${t.id})">✏️</span>
-                        <span class="tx-delete" onclick="deleteTx(${t.id})">×</span>
-                    </div>
+        <div class="card">
+            <form id="budgetForm">
+                <div class="form-group">
+                    <label for="titre">Intitulé de la dépense</label>
+                    <input type="text" id="titre" required placeholder="Ex: Courses Carrefour">
                 </div>
-            `;
-            if (t.deferred) deferredList.innerHTML += html;
-            else currentList.innerHTML += html;
+                
+                <div class="form-group">
+                    <label for="montant">Montant (€)</label>
+                    <input type="number" id="montant" step="0.01" required placeholder="0.00">
+                </div>
+                
+                <div class="form-group">
+                    <label for="payeur">Qui a payé ?</label>
+                    <select id="payeur" required>
+                        <option value="Partenaire 1">Partenaire 1</option>
+                        <option value="Partenaire 2">Partenaire 2</option>
+                    </select>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <input type="checkbox" id="noSplit">
+                    <label for="noSplit">Ne pas diviser (Dépense perso)</label>
+                </div>
+
+                <button type="submit">Ajouter la dépense</button>
+            </form>
+            <div id="statusMsg" class="status-msg"></div>
+        </div>
+
+        <h2>Dernières Dépenses</h2>
+        <div class="card" id="historiqueCard">
+            <button class="btn-secondary" onclick="chargerDepenses()">Rafraîchir l'historique</button>
+            <div id="listeDepenses" style="margin-top: 15px;">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // ETAPE 4 : COLLER VOTRE URL DE DEPLOIEMENT ICI
+        // ==========================================
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz2DVPU1se-fIUiNXFO2DMuxxxFv6qpFCE8AbmBldh6-PRhAHD2s6d-35JVJiCnWN8t/exec";
+
+        // Générateur d'ID unique simple
+        const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+
+        // Envoi des données au Google Sheet
+        document.getElementById('budgetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const msgDiv = document.getElementById('statusMsg');
+            msgDiv.style.color = 'var(--secondary-color)';
+            msgDiv.innerText = "Envoi en cours...";
+
+            const payload = {
+                action: "addData",
+                id: generateID(),
+                titre: document.getElementById('titre').value,
+                montant: parseFloat(document.getElementById('montant').value),
+                payeur: document.getElementById('payeur').value,
+                date: new Date().toLocaleDateString('fr-FR'),
+                statut: "En attente",
+                noSplit: document.getElementById('noSplit').checked ? "Oui" : "Non"
+            };
+
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                body: JSON.stringify(payload)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.result === "success") {
+                    msgDiv.innerText = "Dépense enregistrée !";
+                    document.getElementById('budgetForm').reset();
+                    chargerDepenses(); // Met à jour la liste
+                } else {
+                    msgDiv.style.color = 'var(--error-color)';
+                    msgDiv.innerText = "Erreur : " + data.error;
+                }
+            })
+            .catch(error => {
+                msgDiv.style.color = 'var(--error-color)';
+                msgDiv.innerText = "Erreur de connexion.";
+                console.error(error);
+            });
         });
 
-        calculatedOwedGlobal = nicolasOwes;
-        const display = document.getElementById('balanceDisplay');
-        const instruction = document.getElementById('balanceInstruction');
+        // Récupération des données depuis le Google Sheet
+        function chargerDepenses() {
+            const liste = document.getElementById('listeDepenses');
+            liste.innerHTML = "<p style='text-align:center; color:#888;'>Chargement...</p>";
 
-        if (nicolasOwes > 0) {
-            display.innerText = `${nicolasOwes.toFixed(2)} €`;
-            display.style.color = "var(--pauline-color)";
-            instruction.innerText = "Nicolas doit verser cette somme à Pauline";
-        } else if (nicolasOwes < 0) {
-            display.innerText = `${Math.abs(nicolasOwes).toFixed(2)} €`;
-            display.style.color = "var(--nicolas-color)";
-            instruction.innerText = "Pauline doit verser cette somme à Nicolas";
-        } else {
-            display.innerText = "0.00 €";
-            display.style.color = "var(--text-color)";
-            instruction.innerText = "Les comptes sont parfaits !";
+            fetch(SCRIPT_URL + "?action=getData", { // Utilisation d'un paramètre GET pour l'action de lecture globale
+                method: "POST",
+                body: JSON.stringify({ action: "getData" })
+            })
+            .then(response => response.json())
+            .then(res => {
+                if(res.result === "success" && res.data.length > 0) {
+                    liste.innerHTML = "";
+                    // Afficher les 10 dernières dépenses (ordre inverse)
+                    const dernièresDepenses = res.data.reverse().slice(0, 10);
+                    
+                    dernièresDepenses.forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'depense-item';
+                        div.innerHTML = `
+                            <div class="depense-info">
+                                <span class="depense-titre">${item.Titre}</span>
+                                <span class="depense-meta">${item.Date} • Par ${item.Payeur} ${item.NoSplit === "Oui" ? '(Perso)' : ''}</span>
+                            </div>
+                            <div class="depense-montant">${item.Montant} €</div>
+                        `;
+                        liste.appendChild(div);
+                    });
+                } else {
+                    liste.innerHTML = "<p style='text-align:center; color:#888;'>Aucune dépense trouvée.</p>";
+                }
+            })
+            .catch(error => {
+                liste.innerHTML = "<p style='text-align:center; color:var(--error-color);'>Erreur de chargement.</p>";
+                console.error(error);
+            });
         }
 
-        const historyList = document.getElementById('historyList');
-        historyList.innerHTML = '';
-        
-        if (history.length === 0) {
-            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pour le moment.</p>';
-        } else {
-            history.forEach(h => {
-                let txsHtml = '';
-                h.items.forEach(item => {
-                    txsHtml += `
-                        <div class="history-tx-item">
-                            <span>• ${item.title} (Payé par ${item.payeur}) ${item.noSplit 
+        // Charger les données au démarrage de l'application
+        window.onload = chargerDepenses;
+    </script>
+</body>
+</html>

@@ -964,21 +964,33 @@ async function supprimerDepense(id) {
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
-  setLoading(true); // Bloque l'écran avec le cercle de chargement
+  setLoading(true);
+  
+  // DEBUG : Affiche dans la console du navigateur ce qu'il voit
+  console.log("Mois cherché :", currentMois);
+  
+  const depMois = allData.filter(row => {
+    const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
+    // DEBUG : Affiche chaque ligne analysée
+    console.log("Analyse ligne date :", r[4], "Normalisée :", normaliserDate(r[4]));
+    return r.length > 4 && normaliserDate(r[4]) === currentMois;
+  });
+
+  console.log("Lignes trouvées pour mise à jour :", depMois.length);
+
+  if (depMois.length === 0) {
+    alert("Aucune dépense trouvée pour le mois " + currentMois + ". Vérifie le format de date dans ton Sheet.");
+    setLoading(false);
+    return;
+  }
 
   try {
-    // 1. On filtre les lignes localement pour savoir lesquelles modifier
-    const depMois = allData.filter(row => {
-      const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-      return r.length > 4 && normaliserDate(r[4]) === currentMois;
-    });
-
-    // 2. On attend la réponse pour CHAQUE ligne avant de continuer
     for (const row of depMois) {
       let r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
+      // Envoi manuel avec forçage de l'ID
       await apiCall({
         action: "updateData",
-        id: r[0],
+        id: r[0], // L'ID doit absolument être correct ici
         titre: r[1],
         montant: parseFloat(r[2]),
         payeur: r[3],
@@ -987,21 +999,10 @@ btnVirementFait.addEventListener("click", async () => {
         statut: `Virement fait le ${dateJour()}`
       });
     }
-
-    // 3. SEULEMENT MAINTENANT, on demande au serveur de nous redonner toutes les données fraîches
-    showToast("Synchronisation avec Google...", "success");
-    const raw = await apiCall({ action: "getData" });
-    allData = parseDataResponse(raw);
-    
-    // 4. On rafraîchit l'affichage avec ces nouvelles données
-    rafraichirVue();
-    showToast("Virement enregistré avec succès !", "success");
-
   } catch (e) {
-    console.error(e);
-    showToast("Erreur lors de l'enregistrement", "error");
+    alert("Erreur : " + e);
   } finally {
-    setLoading(false); // Libère l'écran
+    setLoading(false);
   }
 });
 

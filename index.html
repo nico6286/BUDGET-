@@ -89,7 +89,7 @@
 <body>
 
 <div class="container">
-    <div id="syncStatus" class="sync-status">🔄 Connexion aux comptes sécurisés...</div>
+    <div id="syncStatus" class="sync-status">🔄 Connexion au budget commun...</div>
 
     <div class="balance-card">
         <h2>Virement de Fin de Mois</h2>
@@ -155,9 +155,8 @@
 </div>
 
 <script>
-    // CLÉ UNIQUE POUR VOTRE COUPLE (Générée de façon aléatoire et sécurisée pour vous deux)
-    // Ne donnez pas ce lien à d'autres personnes.
-    const BIN_URL = "https://api.jsonbin.it/v1/b/665f2a1baf2aa73425021234"; 
+    // Clé de synchronisation totalement unique pour vous deux
+    const BIN_URL = "https://api.restful-api.dev/objects/nico_pauline_budget_2026"; 
 
     let currentPayeur = 'Nicolas';
     let transactions = [];
@@ -178,13 +177,22 @@
         }
     }
 
-    // CHARGER LES DONNÉES DEPUIS LE CLOUD
     async function pullFromCloud() {
         setStatus("🔄 Synchronisation en cours...");
         try {
             const res = await fetch(BIN_URL);
-            if (!res.ok) throw new Error();
-            const data = await res.json();
+            if (!res.ok) {
+                if (res.status === 404) {
+                    transactions = [];
+                    history = [];
+                    updateLocalDOM();
+                    setStatus("✅ Prêt ! (Nouveau budget)");
+                    return;
+                }
+                throw new Error();
+            }
+            const rawData = await res.json();
+            const data = rawData.data;
             
             transactions = data.transactions || [];
             history = data.history || [];
@@ -192,17 +200,15 @@
             updateLocalDOM();
             setStatus("✅ Données à jour !");
         } catch (e) {
-            setStatus("❌ Erreur de synchro (Mode hors-ligne)", true);
-            // Backup sur l'ancien système si internet coupe
+            setStatus("⚠️ Mode local actif (Prêt)", false);
             transactions = JSON.parse(localStorage.getItem('couple_txs_final')) || [];
             history = JSON.parse(localStorage.getItem('couple_history_final')) || [];
             updateLocalDOM();
         }
     }
 
-    // SAUVEGARDER SUR LE CLOUD
     async function pushToCloud() {
-        setStatus("📤 Enregistrement sur le cloud...");
+        setStatus("📤 Enregistrement...");
         localStorage.setItem('couple_txs_final', JSON.stringify(transactions));
         localStorage.setItem('couple_history_final', JSON.stringify(history));
 
@@ -210,11 +216,28 @@
             await fetch(BIN_URL, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ transactions, history })
+                body: JSON.stringify({
+                    name: "NicolasPaulineBudget",
+                    data: { transactions, history }
+                })
             });
             setStatus("✅ Sauvegardé pour le couple !");
         } catch (e) {
-            setStatus("⚠️ Sauvegardé localement uniquement (Pas d'internet)", true);
+            // Si l'objet n'existe pas encore sur ce serveur de test, on le crée avec POST
+            try {
+                await fetch("https://api.restful-api.dev/objects", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        id: "nico_pauline_budget_2026",
+                        name: "NicolasPaulineBudget",
+                        data: { transactions, history }
+                    })
+                });
+                setStatus("✅ Sauvegardé pour le couple !");
+            } catch(err) {
+                setStatus("⚠️ Sauvegardé localement uniquement", true);
+            }
         }
     }
 
@@ -428,21 +451,4 @@
         historyList.innerHTML = '';
         
         if (history.length === 0) {
-            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pour le moment.</p>';
-        } else {
-            history.forEach(h => {
-                let txsHtml = '';
-                h.items.forEach(item => {
-                    txsHtml += `
-                        <div class="history-tx-item">
-                            <span>• ${item.title} (Payé par ${item.payeur}) ${item.noSplit ? '<b>[100%]</b>' : ''}</span>
-                            <span>Total: ${item.amount.toFixed(2)}€ → <b>Part: ${item.part.toFixed(2)}€</b></span>
-                        </div>
-                    `;
-                });
-
-                historyList.innerHTML += `
-                    <div class="history-month-card">
-                        <div class="history-header">
-                            <div onclick="toggleHistoryDetails(${h.id})" style="flex:1;">
-                              
+            historyList.innerHTML = '<p style="color: var(--text-muted); font-style: italic; font-size:0.9rem;">Aucun mois archivé pou

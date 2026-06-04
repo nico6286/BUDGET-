@@ -97,11 +97,15 @@
       border: none;
       outline: none;
       color: var(--cyan);
-      font-family: var(--mono);
+      font-family: var(--font);
       font-size: .95rem;
       font-weight: 500;
-      width: 68px;
-      caret-color: var(--violet);
+      width: 135px;
+      cursor: pointer;
+    }
+    #filtreMois::-webkit-calendar-picker-indicator {
+      filter: invert(0.8) sepia(1) saturate(5) hue-rotate(135deg);
+      cursor: pointer;
     }
 
     /* ── MAIN WRAPPER ────────────────────────────── */
@@ -153,7 +157,7 @@
 
     .balance-amount {
       font-family: var(--mono);
-      font-size: 2rem;
+      font-size: 1.6rem;
       font-weight: 500;
       margin-top: 4px;
     }
@@ -261,11 +265,14 @@
       outline: none;
       transition: border-color .2s;
       width: 100%;
-      -webkit-appearance: none;
     }
     .form-group input:focus,
     .form-group select:focus { border-color: var(--violet); }
     .form-group select { cursor: pointer; }
+    
+    .form-group input[type="month"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.8) sepia(1) saturate(5) hue-rotate(240deg);
+    }
 
     /* Checkbox facture */
     .checkbox-row {
@@ -463,18 +470,6 @@
     #toast.success { border-color: var(--green); color: var(--green); }
     #toast.error   { border-color: var(--red);   color: var(--red); }
 
-    /* ── SPINNER ─────────────────────────────────── */
-    .spinner {
-      display: inline-block;
-      width: 16px; height: 16px;
-      border: 2px solid rgba(255,255,255,.15);
-      border-top-color: var(--violet);
-      border-radius: 50%;
-      animation: spin .7s linear infinite;
-      vertical-align: middle;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
     /* ── LOADING OVERLAY ─────────────────────────── */
     #loadingOverlay {
       display: none;
@@ -498,6 +493,8 @@
     }
     #loadingOverlay p { color: var(--muted); font-size: .85rem; }
 
+    @keyframes spin { to { transform: rotate(360deg); } }
+
     @media (min-width: 521px) {
       header { padding: 20px 28px 16px; }
       main { padding: 24px 20px 0; }
@@ -506,48 +503,41 @@
 </head>
 <body>
 
-<!-- Loading overlay -->
 <div id="loadingOverlay">
   <div class="spin-big"></div>
   <p>Chargement…</p>
 </div>
 
-<!-- Toast -->
 <div id="toast"></div>
 
-<!-- Header -->
 <header>
   <div class="header-inner">
     <div class="logo">Budget <span>Couple</span></div>
     <div class="month-wrap">
       <label for="filtreMois">Mois</label>
-      <input type="text" id="filtreMois" maxlength="7" placeholder="MM/AAAA" autocomplete="off" spellcheck="false" />
+      <input type="month" id="filtreMois" />
     </div>
   </div>
 </header>
 
 <main>
 
-  <!-- Balance Box -->
   <div id="balanceBox" class="chargement">
     <div class="balance-label">Équilibre du mois</div>
     <div id="balanceText">Calcul en cours…</div>
     <div id="balanceAmount" class="balance-amount" style="display:none"></div>
   </div>
 
-  <!-- Statut virement -->
   <div id="statutWrap">
     <div id="statutText">—</div>
     <button id="btnVirementFait">✅ Marquer le virement comme FAIT</button>
   </div>
 
-  <!-- Bouton éclair -->
   <button id="btnEclair">
     ⚡ Pré-remplir Facture Mensuelle
     <span class="eclair-sub">Facture fixe · Pauline payeur · 959,21 € · 100%</span>
   </button>
 
-  <!-- Formulaire -->
   <div class="form-card" id="formCard">
     <div class="form-title" id="formTitle">Nouvelle dépense</div>
     <input type="hidden" id="editId" value="" />
@@ -562,8 +552,8 @@
         <input type="number" id="inputMontant" placeholder="0.00" step="0.01" min="0" inputmode="decimal" />
       </div>
       <div class="form-group">
-        <label for="inputDate">Mois (MM/AAAA)</label>
-        <input type="text" id="inputDate" maxlength="7" placeholder="MM/AAAA" autocomplete="off" />
+        <label for="inputDate">Mois de la dépense</label>
+        <input type="month" id="inputDate" />
       </div>
       <div class="form-group">
         <label for="inputPayeur">Payeur</label>
@@ -586,7 +576,6 @@
     </div>
   </div>
 
-  <!-- Historique -->
   <div class="section-header">
     <div class="section-title">Dépenses du mois</div>
     <div class="count-badge" id="countBadge">0</div>
@@ -598,15 +587,11 @@
 <script>
 "use strict";
 
-/* ── CONFIG ─────────────────────────────────────── */
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
 
-/* ── STATE ──────────────────────────────────────── */
-let allData = [];        // toutes les entrées (tableau de tableaux)
-let currentMois = "";    // filtre actif
-let refreshTimer = null; // debounce
+let allData = [];        
+let currentMois = "";    
 
-/* ── DOM REFS ───────────────────────────────────── */
 const filtreMois     = document.getElementById("filtreMois");
 const balanceBox     = document.getElementById("balanceBox");
 const balanceText    = document.getElementById("balanceText");
@@ -628,17 +613,28 @@ const listeDepenses  = document.getElementById("listeDepenses");
 const countBadge     = document.getElementById("countBadge");
 const loadingOverlay = document.getElementById("loadingOverlay");
 
-/* ── UTILS ──────────────────────────────────────── */
-function moisActuel() {
+/* ── UTILS DE CONVERSION HTML5 MONTH <-> BACKEND MM/AAAA ── */
+function moisActuelHTML5() {
   const d = new Date();
   const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const yyyy = d.getFullYear();
-  return `${mm}/${yyyy}`;
+  return `${d.getFullYear()}-${mm}`;
 }
 
 function dateJour() {
   const d = new Date();
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
+}
+
+function inputToBackendDate(htmlMonthVal) {
+  if (!htmlMonthVal) return "";
+  const [yyyy, mm] = htmlMonthVal.split("-");
+  return `${mm}/${yyyy}`;
+}
+
+function backendToInputDate(backendDateVal) {
+  if (!backendDateVal) return "";
+  const [mm, yyyy] = backendDateVal.split("/");
+  return `${yyyy}-${mm}`;
 }
 
 function genId() {
@@ -657,7 +653,6 @@ function setLoading(on) {
   loadingOverlay.classList.toggle("active", on);
 }
 
-/* ── API ─────────────────────────────────────────── */
 async function apiCall(payload) {
   const resp = await fetch(SCRIPT_URL, {
     method: "POST",
@@ -668,48 +663,34 @@ async function apiCall(payload) {
   return resp.json();
 }
 
-/* ── PARSER LA RÉPONSE getData (robuste à toute structure) ── */
+/* ── PARSER LA RÉPONSE SANS RE-RECURSION SUR TABLEAU EXTRAIT ── */
 function parseDataResponse(raw) {
-  console.log("📦 Réponse brute getData:", JSON.stringify(raw));
-
-  // Cas 1 : tableau direct de lignes → [[id, titre, ...], [...]]
   if (Array.isArray(raw)) {
-    // Chaque élément est déjà un tableau de valeurs ?
     if (raw.length === 0) return [];
-    if (Array.isArray(raw[0])) return raw; // [[...], [...]]
-    // Tableau d'objets avec propriété valeurs ?
-    if (raw[0] && Array.isArray(raw[0].valeurs)) return raw.map(r => r.valeurs);
-    // Tableau d'objets avec propriété data ?
-    if (raw[0] && Array.isArray(raw[0].data)) return raw.map(r => r.data);
-    // Sinon on retourne tel quel (cas inconnu)
+    // Si c'est déjà un tableau de lignes brutes, on arrête l'extraction ici !
+    if (Array.isArray(raw[0])) return raw; 
+    
+    if (raw[0] && typeof raw[0] === "object") {
+      if (Array.isArray(raw[0].valeurs)) return raw.map(r => r.valeurs);
+      if (Array.isArray(raw[0].data)) return raw.map(r => r.data);
+    }
     return raw;
   }
-
-  // Cas 2 : objet enveloppant
   if (raw && typeof raw === "object") {
-    // { data: [[...], [...]] }
     if (Array.isArray(raw.data)) return parseDataResponse(raw.data);
-    // { valeurs: [[...], [...]] }
     if (Array.isArray(raw.valeurs)) return parseDataResponse(raw.valeurs);
-    // { rows: [...] }
     if (Array.isArray(raw.rows)) return parseDataResponse(raw.rows);
-    // { result: [...] }
     if (Array.isArray(raw.result)) return parseDataResponse(raw.result);
-    // { values: [...] }
     if (Array.isArray(raw.values)) return parseDataResponse(raw.values);
   }
-
-  console.warn("⚠️ Structure getData non reconnue :", raw);
   return [];
 }
 
-/* ── CHARGER LES DONNÉES ──────────────────────────── */
 async function chargerDonnees(showSpinner = true) {
   if (showSpinner) setLoading(true);
   try {
     const raw = await apiCall({ action: "getData" });
     allData = parseDataResponse(raw);
-    console.log(`✅ ${allData.length} ligne(s) chargée(s). Exemple ligne 0:`, allData[0]);
     rafraichirVue();
   } catch (e) {
     console.error(e);
@@ -722,16 +703,12 @@ async function chargerDonnees(showSpinner = true) {
   }
 }
 
-/* ── HELPER : normalise une date ISO ou MM/AAAA → "MM/AAAA" ── */
+/* ── NORMALISATION PAR FUSEAU HORAIRE STRICT (EUROPE/PARIS) ── */
 function normaliserDate(val) {
   if (!val) return "";
   const s = String(val).trim();
-  // Déjà au bon format MM/AAAA
   if (/^\d{2}\/\d{4}$/.test(s)) return s;
-  // Format ISO (ex: "2026-05-31T22:00:00.000Z" = 01/06/2026 heure locale)
-  // On utilise Intl.DateTimeFormat pour obtenir MM/AAAA dans le fuseau local
-  // ce qui gère correctement Paris (UTC+2) et tout autre fuseau
-  if (/^\d{4}-\d{2}-\d{2}/.test(s)) {
+  if (/^\d{4}-\d{2}-\d{2}/.test(s) || s.includes("T")) {
     const d = new Date(s);
     const parts = new Intl.DateTimeFormat("fr-FR", {
       month: "2-digit", year: "numeric", timeZone: "Europe/Paris"
@@ -743,47 +720,41 @@ function normaliserDate(val) {
   return s;
 }
 
-/* ── HELPER : accès unifié aux valeurs d'une ligne ── */
-// Gère : tableau plat, {valeurs:[…]}, objet à clés nommées
-// avec ou sans espaces traîlants ("Titre ", "Montant ", "Payeur "…)
 function rowVals(row) {
-  if (Array.isArray(row)) return row;
-  if (row && Array.isArray(row.valeurs)) return row.valeurs;
-  if (row && Array.isArray(row.data))    return row.data;
-  if (row && Array.isArray(row.values))  return row.values;
-
-  if (row && typeof row === "object") {
-    // Normalise toutes les clés : trim + lowercase
+  let r = [];
+  if (Array.isArray(row)) {
+    r = [...row];
+  } else if (row && Array.isArray(row.valeurs)) {
+    r = [...row.valeurs];
+  } else if (row && Array.isArray(row.data)) {
+    r = [...row.data];
+  } else if (row && Array.isArray(row.values)) {
+    r = [...row.values];
+  } else if (row && typeof row === "object") {
     const n = {};
     for (const k of Object.keys(row)) n[k.trim().toLowerCase()] = row[k];
     const get = (...keys) => { for (const k of keys) if (n[k] !== undefined) return n[k]; };
-    return [
+    r = [
       get("id")      ?? "",
       get("titre")   ?? "",
       get("montant") ?? 0,
       get("payeur")  ?? "",
-      normaliserDate(get("date")),
+      get("date")    ?? "",
       get("statut")  ?? "",
       get("nosplit") ?? "Non"
     ];
   }
-  return [];
+  
+  if (r.length > 4) {
+    r[4] = normaliserDate(r[4]);
+  }
+  return r;
 }
 
-/* ── RAFRAÎCHIR LA VUE (sans appel réseau) ───────── */
 function rafraichirVue() {
-  const mois = currentMois;
-
-  // Filtrer les dépenses du mois
+  const mois = currentMois; 
   const depMois = allData.filter(row => String(rowVals(row)[4]) === mois);
 
-  console.log(`🔍 Filtre "${mois}" → ${depMois.length} dépense(s) sur ${allData.length} total`);
-  if (allData.length > 0) {
-    console.log("   Exemple ligne[0] brute:", allData[0]);
-    console.log("   Exemple ligne[0] vals :", rowVals(allData[0]));
-  }
-
-  // ── Calcul de la balance ───────────────────
   let detteNicolas = 0;
   let estRegle = false;
   let dateReglmt = "";
@@ -812,7 +783,6 @@ function rafraichirVue() {
   const montantAbs = Math.abs(detteNicolas).toFixed(2);
   const aucuneDep  = depMois.length === 0;
 
-  // ── Affichage balance ──────────────────────
   if (aucuneDep) {
     balanceBox.className = "chargement";
     balanceText.textContent = "Aucune dépense ce mois-ci";
@@ -833,7 +803,6 @@ function rafraichirVue() {
     balanceAmount.textContent = `Pauline → ${montantAbs} € → Nicolas`;
   }
 
-  // ── Statut & bouton virement ───────────────
   const virementDu = !aucuneDep && Math.abs(detteNicolas) >= 0.01;
 
   if (aucuneDep) {
@@ -850,7 +819,6 @@ function rafraichirVue() {
     btnVirementFait.style.display = "none";
   }
 
-  // ── Liste dépenses ─────────────────────────
   countBadge.textContent = depMois.length;
 
   if (depMois.length === 0) {
@@ -858,7 +826,6 @@ function rafraichirVue() {
     return;
   }
 
-  // Ordre inversé (plus récent ajouté en premier)
   const depInversees = [...depMois].reverse();
   listeDepenses.innerHTML = depInversees.map(row => {
     const r  = rowVals(row);
@@ -868,9 +835,7 @@ function rafraichirVue() {
     const payeur  = r[3] || "—";
     const noSplit = String(r[6] || "Non") === "Oui";
 
-    const badgeFact = noSplit
-      ? `<span class="badge-facture">100%</span>`
-      : "";
+    const badgeFact = noSplit ? `<span class="badge-facture">100%</span>` : "";
 
     return `
       <div class="dep-item" data-id="${id}">
@@ -887,7 +852,6 @@ function rafraichirVue() {
       </div>`;
   }).join("");
 
-  // Délégation d'événements
   listeDepenses.querySelectorAll(".lien-edit").forEach(a => {
     a.addEventListener("click", () => ouvrirEdition(a.dataset.id));
   });
@@ -900,13 +864,12 @@ function escHtml(str) {
   return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
 }
 
-/* ── FORMULAIRE ──────────────────────────────────── */
 function resetForm() {
   editId.value    = "";
   editStatut.value= "En attente";
   inputTitre.value   = "";
   inputMontant.value = "";
-  inputDate.value    = currentMois;
+  inputDate.value    = backendToInputDate(currentMois);
   inputPayeur.value  = "Nicolas";
   isFacture.checked  = false;
   formTitle.textContent  = "Nouvelle dépense";
@@ -914,7 +877,7 @@ function resetForm() {
   btnAnnuler.style.display = "none";
 }
 
-function ouvrirEdition(id) {
+function abrirEdition(id) {
   const row = allData.find(r => String(rowVals(r)[0]) === String(id));
   if (!row) return;
   const r = rowVals(row);
@@ -923,7 +886,7 @@ function ouvrirEdition(id) {
   editStatut.value   = r[5] || "En attente";
   inputTitre.value   = r[1] || "";
   inputMontant.value = r[2] || "";
-  inputDate.value    = r[4] || currentMois;
+  inputDate.value    = backendToInputDate(r[4] || currentMois);
   inputPayeur.value  = r[3] || "Nicolas";
   isFacture.checked  = String(r[6] || "Non") === "Oui";
 
@@ -934,17 +897,18 @@ function ouvrirEdition(id) {
   document.getElementById("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-/* ── SUBMIT (ajout ou modif) ─────────────────────── */
 btnSubmit.addEventListener("click", async () => {
   const titre   = inputTitre.value.trim();
   const montant = parseFloat(inputMontant.value);
-  const date    = inputDate.value.trim();
+  const rawDate = inputDate.value; 
   const payeur  = inputPayeur.value;
   const noSplit = isFacture.checked ? "Oui" : "Non";
 
-  if (!titre)      { showToast("L'intitulé est requis", "error"); inputTitre.focus(); return; }
+  if (!titre) { showToast("L'intitulé est requis", "error"); inputTitre.focus(); return; }
   if (isNaN(montant) || montant <= 0) { showToast("Montant invalide", "error"); inputMontant.focus(); return; }
-  if (!/^\d{2}\/\d{4}$/.test(date)) { showToast("Format de date invalide (MM/AAAA)", "error"); inputDate.focus(); return; }
+  if (!rawDate) { showToast("La date est requise", "error"); inputDate.focus(); return; }
+
+  const dateFormatee = inputToBackendDate(rawDate);
 
   setLoading(true);
   try {
@@ -952,7 +916,7 @@ btnSubmit.addEventListener("click", async () => {
       await apiCall({
         action: "updateData",
         id:      editId.value,
-        titre, montant, payeur, date, noSplit,
+        titre, montant, payeur, date: dateFormatee, noSplit,
         statut:  editStatut.value
       });
       showToast("Dépense modifiée ✔", "success");
@@ -960,7 +924,7 @@ btnSubmit.addEventListener("click", async () => {
       await apiCall({
         action: "addData",
         id: genId(),
-        titre, montant, payeur, date, noSplit,
+        titre, montant, payeur, date: dateFormatee, noSplit,
         statut: "En attente"
       });
       showToast("Dépense ajoutée ✔", "success");
@@ -977,7 +941,6 @@ btnSubmit.addEventListener("click", async () => {
 
 btnAnnuler.addEventListener("click", resetForm);
 
-/* ── SUPPRESSION ─────────────────────────────────── */
 async function supprimerDepense(id) {
   if (!confirm("Supprimer cette dépense ?")) return;
   setLoading(true);
@@ -993,7 +956,7 @@ async function supprimerDepense(id) {
   }
 }
 
-/* ── VIREMENT FAIT ───────────────────────────────── */
+/* ── PARALLÉLISATION DE LA CLÔTURE POUR ÉVITER LES TIMEOUTS ── */
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
@@ -1002,9 +965,9 @@ btnVirementFait.addEventListener("click", async () => {
 
   setLoading(true);
   try {
-    for (const row of depMois) {
+    const misesAJour = depMois.map(row => {
       const r = rowVals(row);
-      await apiCall({
+      return apiCall({
         action:  "updateData",
         id:      r[0],
         titre:   r[1],
@@ -1014,7 +977,9 @@ btnVirementFait.addEventListener("click", async () => {
         noSplit: r[6] || "Non",
         statut
       });
-    }
+    });
+
+    await Promise.all(misesAJour);
     showToast("Virement enregistré ✔", "success");
     await chargerDonnees(false);
   } catch (e) {
@@ -1025,13 +990,12 @@ btnVirementFait.addEventListener("click", async () => {
   }
 });
 
-/* ── BOUTON ÉCLAIR ───────────────────────────────── */
 btnEclair.addEventListener("click", () => {
   editId.value    = "";
   editStatut.value= "En attente";
   inputTitre.value   = "Facture";
   inputMontant.value = "959.21";
-  inputDate.value    = currentMois;
+  inputDate.value    = backendToInputDate(currentMois);
   inputPayeur.value  = "Pauline";
   isFacture.checked  = true;
   formTitle.textContent  = "Nouvelle dépense";
@@ -1042,34 +1006,25 @@ btnEclair.addEventListener("click", () => {
   inputMontant.select();
 });
 
-/* ── FILTRE MOIS ─────────────────────────────────── */
-filtreMois.addEventListener("input", () => {
-  const val = filtreMois.value.trim();
-  // Mise à jour du champ date du formulaire en temps réel
-  if (/^\d{2}\/\d{4}$/.test(val)) {
-    currentMois = val;
+filtreMois.addEventListener("change", () => {
+  const val = filtreMois.value;
+  if (val) {
+    currentMois = inputToBackendDate(val);
     inputDate.value = val;
-    // Debounce 400ms pour éviter des appels réseau frénétiques
-    clearTimeout(refreshTimer);
-    refreshTimer = setTimeout(() => chargerDonnees(false), 400);
-  } else if (/^\d{2}\/\d{4}$/.test(val) === false && val.length === 7) {
-    // Format incorrect, on rafraichit juste la vue locale (sans appel réseau)
-    currentMois = val;
-    rafraichirVue();
+    chargerDonnees(false);
   }
-  // Moins de 7 chars : on attend sans rien faire
 });
 
-/* ── INIT ────────────────────────────────────────── */
 (function init() {
-  currentMois = moisActuel();
-  filtreMois.value  = currentMois;
-  inputDate.value   = currentMois;
+  const moisInitialHTML = moisActuelHTML5();
+  filtreMois.value = moisInitialHTML;
+  inputDate.value  = moisInitialHTML;
+  currentMois      = inputToBackendDate(moisInitialHTML);
   chargerDonnees(true);
 })();
 </script>
 
-/* ── SERVICE WORKER ─────────────────────────────── */
+<script>
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
     navigator.serviceWorker.register("./sw.js")
@@ -1077,8 +1032,7 @@ if ("serviceWorker" in navigator) {
       .catch(e => console.warn("SW échec:", e.message));
   });
 }
-
-
+</script>
 
 </body>
 </html>

@@ -698,6 +698,7 @@ async function chargerDonnees(showSpinner = true) {
     rafraichirVue();
   } catch (e) {
     console.error(e);
+    alert("Erreur technique : " + e.message);
     showToast("Erreur de connexion au serveur", "error");
     balanceBox.className = "chargement";
     balanceText.textContent = "Impossible de charger les données";

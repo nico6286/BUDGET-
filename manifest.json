@@ -1,0 +1,17 @@
+{
+  "short_name": "Comptes",
+  "name": "Comptes Nicolas & Pauline",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/2343/2343187.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#121212",
+  "theme-color": "#121212",
+  "display": "standalone",
+  "orientation": "portrait"
+}

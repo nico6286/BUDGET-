@@ -259,26 +259,19 @@
     </div>
 
     <script>
-        // =======================================================
-        // METTEZ VOTRE NOUVELLE URL DE DÉPLOIEMENT APPS SCRIPT ICI
-        // =======================================================
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwCvAPEDAe6UUfJDWF38NWWjP5bTMMRBAxgxPrjotUfvMH3xVRz2zpzXAVbsKDOUYkf/exec";
 
-        // Stockage local temporaire des données récupérées du Sheet pour l'édition rapide
         let localData = [];
 
-        // Générateur d'ID unique
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
-        // Formater proprement la date provenant de Sheets
         function formaterDate(dateString) {
             if (!dateString) return '';
             const d = new Date(dateString);
-            if (isNaN(d.getTime())) return dateString; // Si c'est déjà du texte au format fr
+            if (isNaN(d.getTime())) return dateString;
             return d.toLocaleDateString('fr-FR');
         }
 
-        // Soumission du Formulaire (Ajout ou Modification)
         document.getElementById('budgetForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
@@ -297,9 +290,9 @@
             };
 
             if (editId) {
-                payload.action = "updateData"; // Mode modification
+                payload.action = "updateData";
             } else {
-                payload.action = "addData"; // Mode ajout
+                payload.action = "addData";
                 payload.date = new Date().toLocaleDateString('fr-FR');
                 payload.statut = "En attente";
             }
@@ -326,7 +319,6 @@
             });
         });
 
-        // Charger et Calculer les Dépenses (Matière principale)
         function chargerDepenses() {
             const liste = document.getElementById('listeDepenses');
             liste.innerHTML = "<p style='text-align:center; color:#888;'>Chargement...</p>";
@@ -338,38 +330,41 @@
             .then(response => response.json())
             .then(res => {
                 if(res.result === "success" && res.data.length > 0) {
-                    localData = res.data; // Sauvegarde locale pour l'édition
+                    
+                    // Normalisation de la casse des propriétés
+                    localData = res.data.map(obj => {
+                        return Object.keys(obj).reduce((acc, key) => {
+                            acc[key.toLowerCase()] = obj[key];
+                            return acc;
+                        }, {});
+                    });
+
                     liste.innerHTML = "";
                     
                     let totalNicolas = 0;
                     let totalPauline = 0;
 
-                    // On parcourt toutes les lignes pour calculer le virement de équilibrage
-                    res.data.forEach(item => {
-                        // Tolérance de casse : s'adapte si les colonnes ont des minuscules/majuscules dans le sheet
-                        const montant = parseFloat(item.Montant || item.montant || 0);
-                        const payeur = item.Payeur || item.payeur;
-                        const noSplit = item.NoSplit || item.nosplit || item.NoSplit;
+                    localData.forEach(item => {
+                        const montant = parseFloat(item.montant || 0);
+                        const payeur = item.payeur ? item.payeur.trim() : "";
+                        const noSplit = item.nosplit ? item.nosplit.trim() : "";
 
-                        // Seules les dépenses partagées (NoSplit !== "Oui") entrent dans le calcul du virement commun
                         if (noSplit !== "Oui" && noSplit !== "oui") {
                             if (payeur === "Nicolas") totalNicolas += montant;
                             if (payeur === "Pauline") totalPauline += montant;
                         }
                     });
 
-                    // Calcul du virement d'équilibre
                     calculerVirement(totalNicolas, totalPauline);
 
-                    // Affichage des 15 dernières entrées (de la plus récente à la plus ancienne)
-                    const copieInversee = [...res.data].reverse();
+                    const copieInversee = [...localData].reverse();
                     copieInversee.forEach(item => {
-                        const id = item.ID || item.id;
-                        const titre = item.Titre || item.titre;
-                        const montant = parseFloat(item.Montant || item.montant || 0);
-                        const payeur = item.Payeur || item.payeur;
-                        const dateRaw = item.Date || item.date;
-                        const noSplit = item.NoSplit || item.nosplit;
+                        const id = item.id || "";
+                        const titre = item.titre || "Sans titre";
+                        const montant = parseFloat(item.montant || 0);
+                        const payeur = item.payeur || "Inconnu";
+                        const dateRaw = item.date || "";
+                        const noSplit = item.nosplit || "";
 
                         const div = document.createElement('div');
                         div.className = 'depense-item';
@@ -402,39 +397,35 @@
             });
         }
 
-        // Calcule qui doit de l'argent à qui
         function calculerVirement(nicolasTotal, paulineTotal) {
             const box = document.getElementById('balanceBox');
             const diff = nicolasTotal - paulineTotal;
             
             if (diff === 0) {
-                box.style.backgroundColor = "#1b5e20"; // Vert
+                box.style.backgroundColor = "#1b5e20";
                 box.innerText = "Équilibre parfait : Personne ne doit rien !";
             } else if (diff > 0) {
-                // Nicolas a payé plus que Pauline
                 const virement = diff / 2;
-                box.style.backgroundColor = "#e65100"; // Orange / Alerte douce
+                box.style.backgroundColor = "#e65100";
                 box.innerText = `Pauline doit faire un virement de ${virement.toFixed(2)} € à Nicolas`;
             } else {
-                // Pauline a payé plus que Nicolas
                 const virement = Math.abs(diff) / 2;
                 box.style.backgroundColor = "#e65100";
                 box.innerText = `Nicolas doit faire un virement de ${virement.toFixed(2)} € à Pauline`;
             }
         }
 
-        // Passer le formulaire en mode Édition
         function preparerEdition(id) {
-            const item = localData.find(d => (d.ID || d.id) === id);
+            const item = localData.find(d => d.id === id);
             if (!item) return;
 
             document.getElementById('formTitle').innerText = "Modifier la dépense";
             document.getElementById('editId').value = id;
-            document.getElementById('titre').value = item.Titre || item.titre;
-            document.getElementById('montant').value = item.Montant || item.montant;
-            document.getElementById('payeur').value = item.Payeur || item.payeur;
+            document.getElementById('titre').value = item.titre || "";
+            document.getElementById('montant').value = item.montant || "";
+            document.getElementById('payeur').value = item.payeur || "Nicolas";
             
-            const noSplitVal = item.NoSplit || item.nosplit;
+            const noSplitVal = item.nosplit || "";
             document.getElementById('noSplit').checked = (noSplitVal === "Oui" || noSplitVal === "oui");
 
             document.getElementById('submitBtn').innerText = "Enregistrer les modifications";
@@ -442,7 +433,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
 
-        // Supprimer une ligne
         function supprimerDepense(id) {
             if (!confirm("Voulez-vous vraiment supprimer cette dépense ?")) return;
 
@@ -470,7 +460,6 @@
             });
         }
 
-        // Réinitialiser le formulaire
         function resetForm() {
             document.getElementById('formTitle').innerText = "Ajouter une dépense";
             document.getElementById('editId').value = "";
@@ -479,7 +468,6 @@
             document.getElementById('cancelEditBtn').style.display = "none";
         }
 
-        // Lancement au chargement de la page
         window.onload = chargerDepenses;
     </script>
 </body>

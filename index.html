@@ -86,13 +86,12 @@
         .btn-success { background-color: var(--success-color); color: white; margin-top: 5px; border: 1px solid #2e7d32; }
         .btn-cancel { background-color: #333; color: #fff; margin-top: 8px; }
         
-        /* Style du nouveau bouton de pré-remplissage */
         .btn-quick { 
-            background-color: #263238; border: 1px dashed var(--accent-orange); 
-            color: var(--accent-orange); padding: 8px; font-size: 0.85rem; 
-            margin-bottom: 15px; border-radius: 6px;
+            width: 100%; background-color: #263238; border: 1px dashed var(--accent-orange); 
+            color: var(--accent-orange); padding: 10px; font-size: 0.9rem; 
+            margin-bottom: 15px; border-radius: 6px; cursor: pointer; font-weight: bold;
         }
-        .btn-quick:active { background-color: #37474f; }
+        .btn-quick:hover { background-color: #37474f; }
 
         .status-msg { text-align: center; font-weight: bold; margin-top: 10px; min-height: 24px; }
 
@@ -124,24 +123,20 @@
     <div class="container">
         <h1>Budget Couple</h1>
         
-        <!-- Sélection du mois de visualisation globale -->
         <div class="card" style="padding: 15px; margin-bottom: 15px;">
             <label for="filtreMois" style="font-weight: bold; color: var(--primary-color);">Mois à calculer / consulter :</label>
             <input type="text" id="filtreMois" placeholder="Ex: 05/2026" style="text-align: center; font-weight: bold; font-size: 1.1rem;" maxlength="7">
         </div>
 
-        <!-- Module d'Équilibre Financier -->
-        <div id="balanceBox" class="balance-box">Calcul en cours...</div>
+        <div id="balanceBox" class="balance-box">Initialisation...</div>
         <div id="virementStatus" class="virement-status"></div>
         <button id="btnMarquerFait" class="btn-success" style="display:none;" onclick="marquerVirementFait()">Marquer le virement comme FAIT</button>
         
         <div style="margin-bottom: 20px;"></div>
 
-        <!-- Formulaire d'ajout / Édition -->
         <div class="card">
             <h3 id="formTitle" style="margin-top:0; margin-bottom: 10px; color: var(--secondary-color);">Ajouter une ligne</h3>
             
-            <!-- Nouveau bouton d'automatisation de début de mois -->
             <button type="button" class="btn-quick" onclick="preRemplirFacture()">⚡ Pré-remplir Facture Mensuelle</button>
 
             <form id="budgetForm">
@@ -181,7 +176,6 @@
             <div id="statusMsg" class="status-msg"></div>
         </div>
 
-        <!-- Historique du mois filtré -->
         <h2>Dépenses du mois sélectionné</h2>
         <div class="card">
             <button class="btn-secondary" onclick="chargerDepenses()">Rafraîchir les données</button>
@@ -196,49 +190,41 @@
         const generateID = () => 'ID-' + Math.random().toString(36).substr(2, 9).toUpperCase();
 
         // Formate automatiquement la saisie 'MMAAAA' en 'MM/AAAA'
-        function appliquerMasqueMois(inputElement) {
-            inputElement.addEventListener('input', function(e) {
-                let v = e.target.value.replace(/\D/g, '');
-                if (v.length === 4) {
-                    let mois = v.substr(0, 2);
-                    let annee = v.substr(2, 2);
-                    let anneeComplete = parseInt(annee) < 50 ? '20' + annee : '19' + annee;
-                    e.target.value = mois + '/' + anneeComplete;
-                }
-            });
-            inputElement.addEventListener('change', function(e) {
-                let v = e.target.value;
-                if(v.length === 6 && !v.includes('/')) {
-                     e.target.value = v.substr(0,2) + '/' + v.substr(2,4);
-                }
-            });
+        function formaterSaisieMois(valeur) {
+            let v = valeur.replace(/\D/g, '');
+            if (v.length === 4) {
+                let mois = v.substr(0, 2);
+                let annee = v.substr(2, 2);
+                let anneeComplete = parseInt(annee) < 50 ? '20' + annee : '19' + annee;
+                return mois + '/' + anneeComplete;
+            }
+            if (v.length === 6) {
+                return v.substr(0, 2) + '/' + v.substr(2, 4);
+            }
+            return valeur;
         }
 
-        const filtreMoisInput = document.getElementById('filtreMois');
-        const dateMoisInput = document.getElementById('dateMois');
-        appliquerMasqueMois(filtreMoisInput);
-        appliquerMasqueMois(dateMoisInput);
+        function ajouterMasques() {
+            const filtre = document.getElementById('filtreMois');
+            const dateInput = document.getElementById('dateMois');
 
-        // Par défaut, cible le mois en cours
-        const mActuel = (new Date().getMonth() + 1).toString().padStart(2, '0');
-        const aActuel = new Date().getFullYear();
-        filtreMoisInput.value = `${mActuel}/${aActuel}`;
-        dateMoisInput.value = `${mActuel}/${aActuel}`;
+            filtre.addEventListener('input', function(e) { e.target.value = formaterSaisieMois(e.target.value); });
+            dateInput.addEventListener('input', function(e) { e.target.value = formaterSaisieMois(e.target.value); });
+            
+            filtre.addEventListener('change', chargerDepenses);
+        }
 
-        filtreMoisInput.addEventListener('change', chargerDepenses);
-
-        // Fonction pour pré-remplir l'entrée facture récurrente
+        // Fonction de pré-remplissage
         function preRemplirFacture() {
             document.getElementById('titre').value = "Facture";
-            document.getElementById('montant').value = "959.21"; // Montant habituel par défaut
-            document.getElementById('dateMois').value = filtreMoisInput.value; // Reprend le mois affiché en haut
+            document.getElementById('montant').value = "959.21";
+            document.getElementById('dateMois').value = document.getElementById('filtreMois').value;
             document.getElementById('payeur').value = "Pauline";
             document.getElementById('isFacture').checked = true;
             
-            // Met le focus directement sur le montant pour pouvoir le modifier facilement s'il y a un réajustement
-            const montantInput = document.getElementById('montant');
-            montantInput.focus();
-            montantInput.select();
+            const mInput = document.getElementById('montant');
+            mInput.focus();
+            mInput.select();
         }
 
         document.getElementById('budgetForm').addEventListener('submit', function(e) {
@@ -286,7 +272,7 @@
 
         function chargerDepenses() {
             const liste = document.getElementById('listeDepenses');
-            const cibleMois = filtreMoisInput.value.trim();
+            const cibleMois = document.getElementById('filtreMois').value.trim();
             liste.innerHTML = "<p style='text-align:center; color:#888;'>Chargement...</p>";
 
             fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "getData" }) })
@@ -297,17 +283,17 @@
                     localData = res.data.map(item => {
                         const valeurs = Array.isArray(item) ? item : Object.values(item);
                         return {
-                            id: valeurs[0] ? valeurs[0].toString() : "",
-                            titre: valeurs[1] ? valeurs[1].toString() : "Sans titre",
-                            montant: parseFloat(valeurs[2] || 0),
-                            payeur: valeurs[3] ? valeurs[3].toString().trim() : "Inconnu",
-                            date: valeurs[4] ? valeurs[4].toString().trim() : "",
-                            statut: valeurs[5] ? valeurs[5].toString().trim() : "En attente",
-                            nosplit: valeurs[6] ? valeurs[6].toString().trim() : "Non"
+                            id: valores[0] ? valores[0].toString() : "",
+                            titre: valores[1] ? valores[1].toString() : "Sans titre",
+                            montant: parseFloat(valores[2] || 0),
+                            payeur: valores[3] ? valores[3].toString().trim() : "Inconnu",
+                            date: valores[4] ? valores[4].toString().trim() : "",
+                            statut: valores[5] ? valores[5].toString().trim() : "En attente",
+                            nosplit: valores[6] ? valores[6].toString().trim() : "Non"
                         };
                     });
 
-                    const dataDuMois = localData.filter(item => item.date.includes(cibleMois));
+                    const dataDuMois = localData.filter(item => item.date === cibleMois);
                     liste.innerHTML = "";
                     
                     let virementDuMois = 0;
@@ -336,7 +322,8 @@
                         return;
                     }
 
-                    dataDuMois.reverse().forEach(item => {
+                    // On inverse pour voir les plus récents en premier
+                    [...dataDuMois].reverse().forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'depense-item';
                         div.innerHTML = `
@@ -402,13 +389,13 @@
         }
 
         function marquerVirementFait() {
-            const cibleMois = filtreMoisInput.value.trim();
+            const cibleMois = document.getElementById('filtreMois').value.trim();
             if (!confirm(`Clôturer les comptes de ${cibleMois} et marquer le virement comme effectué ?`)) return;
 
             const dateDuJour = new Date().toLocaleDateString('fr-FR').substr(0, 5);
             const chaineStatut = `Virement fait le ${dateDuJour}`;
 
-            const lignesDuMois = localData.filter(item => item.date.includes(cibleMois));
+            const lignesDuMois = localData.filter(item => item.date === cibleMois);
             
             let promesses = lignesDuMois.map(item => {
                 const payload = {
@@ -432,4 +419,18 @@
             })
             .catch(err => {
                 alert("Erreur lors de la validation globale.");
-       
+                console.error(err);
+            });
+        }
+
+        function preparerEdition(id) {
+            const item = localData.find(d => d.id === id);
+            if (!item) return;
+
+            document.getElementById('formTitle').innerText = "Modifier la ligne";
+            document.getElementById('editId').value = id;
+            document.getElementById('titre').value = item.titre;
+            document.getElementById('montant').value = item.montant;
+            document.getElementById('dateMois').value = item.date;
+            document.getElementById('payeur').value = item.payeur === "Pauline" ? "Pauline" : "Nicolas";
+            document.getElementById('isFacture').checked = (item.nosplit === "Oui" || item.nosplit === 

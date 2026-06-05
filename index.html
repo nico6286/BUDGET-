@@ -960,45 +960,43 @@ async function supprimerDepense(id) {
     setLoading(false);
   }
 }
-
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
   setLoading(true);
 
-  // Filtrage ultra-précis
+  // Filtrage robuste
   const depMois = allData.filter(row => {
-    const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-    // r[4] est ta colonne E (Date)
-    const dateLue = r[4] ? String(r[4]).trim() : "";
-    return dateLue !== "" && normaliserDate(dateLue) === currentMois;
+    // row est maintenant un simple tableau [id, titre, montant, payeur, date, statut, noSplit]
+    const dateVal = row[4] ? String(row[4]).trim() : "";
+    return dateVal !== "" && normaliserDate(dateVal) === currentMois;
   });
 
   if (depMois.length === 0) {
-    alert("Aucune dépense valide trouvée pour le mois " + currentMois + ". Vérifie tes dates en colonne E.");
+    alert("Aucune donnée trouvée pour le mois " + currentMois);
     setLoading(false);
     return;
   }
 
   try {
     for (const row of depMois) {
-      let r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-      
       await apiCall({
         action: "updateData",
-        id: r[0],
-        titre: r[1],
-        montant: parseFloat(r[2]),
-        payeur: r[3],
-        date: r[4], 
-        noSplit: r[6] || "Non",
+        id: row[0],
+        titre: row[1],
+        montant: parseFloat(row[2]),
+        payeur: row[3],
+        date: row[4],
+        noSplit: row[6] || "Non",
         statut: `Virement fait le ${dateJour()}`
       });
     }
 
     showToast("Virement enregistré !", "success");
-    await chargerDonnees(true); // Recharge les données depuis le serveur
-    rafraichirVue(); // Rafraîchit l'affichage
+    // Rechargement total forcé
+    const raw = await apiCall({ action: "getData" });
+    allData = raw.data; // On prend directement le tableau
+    rafraichirVue();
 
   } catch (e) {
     alert("Erreur critique : " + e.message);
@@ -1006,7 +1004,6 @@ btnVirementFait.addEventListener("click", async () => {
     setLoading(false);
   }
 });
-
 btnEclair.addEventListener("click", () => {
   editId.value    = "";
   editStatut.value= "En attente";

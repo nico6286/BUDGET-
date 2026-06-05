@@ -953,20 +953,15 @@ async function supprimerDepense(id) {
   }
 }
 btnVirementFait.addEventListener("click", async () => {
-  console.log("Contenu de allData :", allData);
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
   setLoading(true);
 
-// Utilise cette version du filtre
-const depMois = allData.filter(row => {
-  if (!row[4]) return false; // row[4] est la date
-  
-  // Convertit la cellule en texte et vérifie si elle contient le mois
-  // On compare en ignorant le format exact
-  const dateCellule = String(row[4]); 
-  return dateCellule.includes("01/2026") || dateCellule.includes("2026-01");
-});
+  // ✅ On utilise currentMois dynamiquement + normalisation robuste
+  const depMois = allData.filter(row => {
+    const r = rowVals(row); // utilise ta fonction qui normalise déjà la date
+    return String(r[4]) === currentMois;
+  });
 
   if (depMois.length === 0) {
     alert("Aucune donnée trouvée pour le mois " + currentMois);
@@ -976,24 +971,21 @@ const depMois = allData.filter(row => {
 
   try {
     for (const row of depMois) {
+      const r = rowVals(row); // ✅ valeurs normalisées
       await apiCall({
         action: "updateData",
-        id: row[0],
-        titre: row[1],
-        montant: parseFloat(row[2]),
-        payeur: row[3],
-        date: row[4],
-        noSplit: row[6] || "Non",
-        statut: `Virement fait le ${dateJour()}`
+        id:      r[0],
+        titre:   r[1],
+        montant: parseFloat(r[2]),
+        payeur:  r[3],
+        date:    r[4],
+        noSplit: r[6] || "Non",
+        statut:  `Virement fait le ${dateJour()}`
       });
     }
 
     showToast("Virement enregistré !", "success");
-    // Rechargement total forcé
-    const raw = await apiCall({ action: "getData" });
-    allData = raw.data; // On prend directement le tableau
-    rafraichirVue();
-
+    await chargerDonnees(false); // ✅ utilise la fonction standard qui parse bien
   } catch (e) {
     alert("Erreur critique : " + e.message);
   } finally {

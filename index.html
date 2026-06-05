@@ -668,45 +668,16 @@ async function apiCall(payload) {
   return resp.json();
 }
 
-/* ── PARSER LA RÉPONSE SANS RE-RECURSION SUR TABLEAU EXTRAIT ── */
+/* ── PARSER SIMPLIFIÉ ADAPTÉ À TON NOUVEAU CODE.GS ── */
 function parseDataResponse(raw) {
+  // Puisque le serveur renvoie directement un tableau de lignes (data: [[...], [...]]),
+  // on a juste besoin de vérifier que c'est bien un tableau.
   if (Array.isArray(raw)) {
-    if (raw.length === 0) return [];
-    if (Array.isArray(raw[0])) return raw; 
-    
-    if (raw[0] && typeof raw[0] === "object") {
-      if (Array.isArray(raw[0].valeurs)) return raw.map(r => r.valeurs);
-      if (Array.isArray(raw[0].data)) return raw.map(r => r.data);
-    }
-    return raw;
-  }
-  if (raw && typeof raw === "object") {
-    if (Array.isArray(raw.data)) return parseDataResponse(raw.data);
-    if (Array.isArray(raw.valeurs)) return parseDataResponse(raw.valeurs);
-    if (Array.isArray(raw.rows)) return parseDataResponse(raw.rows);
-    if (Array.isArray(raw.result)) return parseDataResponse(raw.result);
-    if (Array.isArray(raw.values)) return parseDataResponse(raw.values);
+    // On filtre juste pour éliminer les lignes vides accidentelles
+    return raw.filter(row => Array.isArray(row) && row.length > 0 && row[0] !== "");
   }
   return [];
 }
-
-async function chargerDonnees(showSpinner = true) {
-  if (showSpinner) setLoading(true);
-  try {
-    const response = await apiCall({ action: "getData" });
-    
-    // CORRECTION : On passe uniquement le tableau 'data' à la fonction
-    // On vérifie d'abord si response.data existe
-    if (response && response.data) {
-        allData = parseDataResponse(response.data); 
-    } else {
-        // Fallback si la structure est différente
-        allData = []; 
-        console.warn("Données reçues vides ou format incorrect :", response);
-    }
-    
-    rafraichirVue();
-  } catch (e) 
 
 /* ── NORMALISATION PAR FUSEAU HORAIRE STRICT (EUROPE/PARIS) ── */
 function normaliserDate(val) {

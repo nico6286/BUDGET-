@@ -678,6 +678,27 @@ function parseDataResponse(raw) {
   }
   return [];
 }
+  async function chargerDonnees(showSpinner = true) {
+  if (showSpinner) setLoading(true);
+  try {
+    const response = await apiCall({ action: "getData" });
+    
+    // On vérifie que la réponse contient bien la propriété 'data'
+    if (response && response.data) {
+        allData = parseDataResponse(response.data);
+    } else {
+        allData = [];
+        console.warn("Données reçues vides ou format incorrect :", response);
+    }
+    
+    rafraichirVue();
+  } catch (e) {
+    console.error("Erreur dans chargerDonnees :", e);
+    alert("Erreur de connexion : " + e.message);
+  } finally {
+    if (showSpinner) setLoading(false);
+  }
+}
 
 /* ── NORMALISATION PAR FUSEAU HORAIRE STRICT (EUROPE/PARIS) ── */
 function normaliserDate(val) {

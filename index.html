@@ -693,20 +693,20 @@ function parseDataResponse(raw) {
 async function chargerDonnees(showSpinner = true) {
   if (showSpinner) setLoading(true);
   try {
-    const raw = await apiCall({ action: "getData" });
-    allData = parseDataResponse(raw);
+    const response = await apiCall({ action: "getData" });
+    
+    // CORRECTION : On passe uniquement le tableau 'data' à la fonction
+    // On vérifie d'abord si response.data existe
+    if (response && response.data) {
+        allData = parseDataResponse(response.data); 
+    } else {
+        // Fallback si la structure est différente
+        allData = []; 
+        console.warn("Données reçues vides ou format incorrect :", response);
+    }
+    
     rafraichirVue();
-  } catch (e) {
-    console.error(e);
-    alert("Erreur technique : " + e.message);
-    showToast("Erreur de connexion au serveur", "error");
-    balanceBox.className = "chargement";
-    balanceText.textContent = "Impossible de charger les données";
-    balanceAmount.style.display = "none";
-  } finally {
-    if (showSpinner) setLoading(false);
-  }
-}
+  } catch (e) 
 
 /* ── NORMALISATION PAR FUSEAU HORAIRE STRICT (EUROPE/PARIS) ── */
 function normaliserDate(val) {

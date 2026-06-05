@@ -240,11 +240,6 @@
       grid-template-columns: 1fr 1fr;
       gap: 12px;
     }
-    .form-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px;
-    }
     .form-group {
       display: flex;
       flex-direction: column;
@@ -274,7 +269,7 @@
     .form-group input:focus,
     .form-group select:focus { border-color: var(--violet); }
     .form-group select { cursor: pointer; }
-    
+
     .form-group input[type="month"]::-webkit-calendar-picker-indicator {
       filter: invert(0.8) sepia(1) saturate(5) hue-rotate(240deg);
     }
@@ -594,29 +589,29 @@
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxoBqbVz_8xAWpzG8HOsj9bIdQqc2HhNBwofZvMOsjefRZ4OfEkwEEs2mSzoRUv9VsP/exec";
 
-let allData = [];        
-let currentMois = "";    
+let allData = [];
+let currentMois = "";
 
-const filtreMois     = document.getElementById("filtreMois");
-const balanceBox     = document.getElementById("balanceBox");
-const balanceText    = document.getElementById("balanceText");
-const balanceAmount  = document.getElementById("balanceAmount");
-const statutText     = document.getElementById("statutText");
-const btnVirementFait= document.getElementById("btnVirementFait");
-const btnEclair      = document.getElementById("btnEclair");
-const formTitle      = document.getElementById("formTitle");
-const editId         = document.getElementById("editId");
-const editStatut     = document.getElementById("editStatut");
-const inputTitre     = document.getElementById("inputTitre");
-const inputMontant   = document.getElementById("inputMontant");
-const inputDate      = document.getElementById("inputDate");
-const inputPayeur    = document.getElementById("inputPayeur");
-const isFacture      = document.getElementById("isFacture");
-const btnSubmit      = document.getElementById("btnSubmit");
-const btnAnnuler     = document.getElementById("btnAnnuler");
-const listeDepenses  = document.getElementById("listeDepenses");
-const countBadge     = document.getElementById("countBadge");
-const loadingOverlay = document.getElementById("loadingOverlay");
+const filtreMois      = document.getElementById("filtreMois");
+const balanceBox      = document.getElementById("balanceBox");
+const balanceText     = document.getElementById("balanceText");
+const balanceAmount   = document.getElementById("balanceAmount");
+const statutText      = document.getElementById("statutText");
+const btnVirementFait = document.getElementById("btnVirementFait");
+const btnEclair       = document.getElementById("btnEclair");
+const formTitle       = document.getElementById("formTitle");
+const editId          = document.getElementById("editId");
+const editStatut      = document.getElementById("editStatut");
+const inputTitre      = document.getElementById("inputTitre");
+const inputMontant    = document.getElementById("inputMontant");
+const inputDate       = document.getElementById("inputDate");
+const inputPayeur     = document.getElementById("inputPayeur");
+const isFacture       = document.getElementById("isFacture");
+const btnSubmit       = document.getElementById("btnSubmit");
+const btnAnnuler      = document.getElementById("btnAnnuler");
+const listeDepenses   = document.getElementById("listeDepenses");
+const countBadge      = document.getElementById("countBadge");
+const loadingOverlay  = document.getElementById("loadingOverlay");
 
 /* ── UTILS DE CONVERSION HTML5 MONTH <-> BACKEND MM/AAAA ── */
 function moisActuelHTML5() {
@@ -668,29 +663,23 @@ async function apiCall(payload) {
   return resp.json();
 }
 
-/* ── PARSER SIMPLIFIÉ ADAPTÉ À TON NOUVEAU CODE.GS ── */
 function parseDataResponse(raw) {
-  // Puisque le serveur renvoie directement un tableau de lignes (data: [[...], [...]]),
-  // on a juste besoin de vérifier que c'est bien un tableau.
   if (Array.isArray(raw)) {
-    // On filtre juste pour éliminer les lignes vides accidentelles
     return raw.filter(row => Array.isArray(row) && row.length > 0 && row[0] !== "");
   }
   return [];
 }
-  async function chargerDonnees(showSpinner = true) {
+
+async function chargerDonnees(showSpinner = true) {
   if (showSpinner) setLoading(true);
   try {
     const response = await apiCall({ action: "getData" });
-    
-    // On vérifie que la réponse contient bien la propriété 'data'
     if (response && response.data) {
-        allData = parseDataResponse(response.data);
+      allData = parseDataResponse(response.data);
     } else {
-        allData = [];
-        console.warn("Données reçues vides ou format incorrect :", response);
+      allData = [];
+      console.warn("Données reçues vides ou format incorrect :", response);
     }
-    
     rafraichirVue();
   } catch (e) {
     console.error("Erreur dans chargerDonnees :", e);
@@ -741,7 +730,7 @@ function rowVals(row) {
       get("nosplit") ?? "Non"
     ];
   }
-  
+
   if (r.length > 4) {
     r[4] = normaliserDate(r[4]);
   }
@@ -749,24 +738,31 @@ function rowVals(row) {
 }
 
 function rafraichirVue() {
-  const mois = currentMois; 
-  const depMois = allData.filter(row => String(rowVals(row)[4]) === mois);
+  const mois = currentMois;
+
+  // ── Cherche la ligne virement spéciale pour ce mois ──
+  const ligneVirement = allData.find(row => {
+    const r = rowVals(row);
+    return String(r[0]) === `virement-${mois}`;
+  });
+  const estRegle   = !!ligneVirement;
+  const dateReglmt = estRegle
+    ? String(rowVals(ligneVirement)[5]).replace("Virement fait le ", "").trim()
+    : "";
+
+  // ── Filtre les vraies dépenses (exclut les lignes virement) ──
+  const depMois = allData.filter(row => {
+    const r = rowVals(row);
+    return String(r[4]) === mois && !String(r[0]).startsWith("virement-");
+  });
 
   let detteNicolas = 0;
-  let estRegle = false;
-  let dateReglmt = "";
 
   depMois.forEach(row => {
-    const r = rowVals(row);
-    const statut  = String(r[5] || "");
+    const r       = rowVals(row);
     const noSplit = String(r[6] || "Non");
     const montant = parseFloat(r[2]) || 0;
     const payeur  = String(r[3] || "");
-
-    if (statut.startsWith("Virement fait le")) {
-      estRegle = true;
-      dateReglmt = statut.replace("Virement fait le ", "").trim();
-    }
 
     if (noSplit === "Oui") {
       if (payeur === "Pauline") detteNicolas += montant;
@@ -825,13 +821,12 @@ function rafraichirVue() {
 
   const depInversees = [...depMois].reverse();
   listeDepenses.innerHTML = depInversees.map(row => {
-    const r  = rowVals(row);
+    const r       = rowVals(row);
     const id      = r[0];
     const titre   = r[1] || "—";
     const montant = parseFloat(r[2] || 0).toFixed(2);
     const payeur  = r[3] || "—";
     const noSplit = String(r[6] || "Non") === "Oui";
-
     const badgeFact = noSplit ? `<span class="badge-facture">100%</span>` : "";
 
     return `
@@ -862,15 +857,15 @@ function escHtml(str) {
 }
 
 function resetForm() {
-  editId.value    = "";
-  editStatut.value= "En attente";
-  inputTitre.value   = "";
-  inputMontant.value = "";
-  inputDate.value    = backendToInputDate(currentMois);
-  inputPayeur.value  = "Nicolas";
-  isFacture.checked  = false;
-  formTitle.textContent  = "Nouvelle dépense";
-  btnSubmit.textContent  = "Ajouter";
+  editId.value     = "";
+  editStatut.value = "En attente";
+  inputTitre.value    = "";
+  inputMontant.value  = "";
+  inputDate.value     = backendToInputDate(currentMois);
+  inputPayeur.value   = "Nicolas";
+  isFacture.checked   = false;
+  formTitle.textContent   = "Nouvelle dépense";
+  btnSubmit.textContent   = "Ajouter";
   btnAnnuler.style.display = "none";
 }
 
@@ -887,8 +882,8 @@ function ouvrirEdition(id) {
   inputPayeur.value  = r[3] || "Nicolas";
   isFacture.checked  = String(r[6] || "Non") === "Oui";
 
-  formTitle.textContent  = "Modifier la dépense";
-  btnSubmit.textContent  = "Enregistrer";
+  formTitle.textContent    = "Modifier la dépense";
+  btnSubmit.textContent    = "Enregistrer";
   btnAnnuler.style.display = "block";
 
   document.getElementById("formCard").scrollIntoView({ behavior: "smooth", block: "start" });
@@ -897,13 +892,13 @@ function ouvrirEdition(id) {
 btnSubmit.addEventListener("click", async () => {
   const titre   = inputTitre.value.trim();
   const montant = parseFloat(inputMontant.value);
-  const rawDate = inputDate.value; 
+  const rawDate = inputDate.value;
   const payeur  = inputPayeur.value;
   const noSplit = isFacture.checked ? "Oui" : "Non";
 
-  if (!titre) { showToast("L'intitulé est requis", "error"); inputTitre.focus(); return; }
-  if (isNaN(montant) || montant <= 0) { showToast("Montant invalide", "error"); inputMontant.focus(); return; }
-  if (!rawDate) { showToast("La date est requise", "error"); inputDate.focus(); return; }
+  if (!titre)                        { showToast("L'intitulé est requis", "error"); inputTitre.focus();   return; }
+  if (isNaN(montant) || montant <= 0){ showToast("Montant invalide",      "error"); inputMontant.focus(); return; }
+  if (!rawDate)                      { showToast("La date est requise",   "error"); inputDate.focus();    return; }
 
   const dateFormatee = inputToBackendDate(rawDate);
 
@@ -912,9 +907,9 @@ btnSubmit.addEventListener("click", async () => {
     if (editId.value) {
       await apiCall({
         action: "updateData",
-        id:      editId.value,
+        id: editId.value,
         titre, montant, payeur, date: dateFormatee, noSplit,
-        statut:  editStatut.value
+        statut: editStatut.value
       });
       showToast("Dépense modifiée ✔", "success");
     } else {
@@ -952,56 +947,43 @@ async function supprimerDepense(id) {
     setLoading(false);
   }
 }
+
+/* ── BOUTON VIREMENT FAIT : nouvelle logique simple ── */
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
-
   setLoading(true);
-
-  // ✅ On utilise currentMois dynamiquement + normalisation robuste
-  const depMois = allData.filter(row => {
-    const r = rowVals(row); // utilise ta fonction qui normalise déjà la date
-    return String(r[4]) === currentMois;
-  });
-
-  if (depMois.length === 0) {
-    alert("Aucune donnée trouvée pour le mois " + currentMois);
-    setLoading(false);
-    return;
-  }
-
   try {
-    for (const row of depMois) {
-      const r = rowVals(row); // ✅ valeurs normalisées
-      await apiCall({
-        action: "updateData",
-        id:      r[0],
-        titre:   r[1],
-        montant: parseFloat(r[2]),
-        payeur:  r[3],
-        date:    r[4],
-        noSplit: r[6] || "Non",
-        statut:  `Virement fait le ${dateJour()}`
-      });
-    }
-
+    // On ajoute UNE seule ligne dédiée avec l'ID virement-MM/YYYY
+    await apiCall({
+      action:  "addData",
+      id:      `virement-${currentMois}`,
+      titre:   "🔒 Virement effectué",
+      montant: 0,
+      payeur:  "Système",
+      date:    currentMois,
+      noSplit: "Non",
+      statut:  `Virement fait le ${dateJour()}`
+    });
     showToast("Virement enregistré !", "success");
-    await chargerDonnees(false); // ✅ utilise la fonction standard qui parse bien
+    await chargerDonnees(false);
   } catch (e) {
-    alert("Erreur critique : " + e.message);
+    console.error(e);
+    alert("Erreur : " + e.message);
   } finally {
     setLoading(false);
   }
 });
+
 btnEclair.addEventListener("click", () => {
-  editId.value    = "";
-  editStatut.value= "En attente";
-  inputTitre.value   = "Facture";
-  inputMontant.value = "959.21";
-  inputDate.value    = backendToInputDate(currentMois);
-  inputPayeur.value  = "Pauline";
-  isFacture.checked  = true;
-  formTitle.textContent  = "Nouvelle dépense";
-  btnSubmit.textContent  = "Ajouter";
+  editId.value     = "";
+  editStatut.value = "En attente";
+  inputTitre.value    = "Facture";
+  inputMontant.value  = "959.21";
+  inputDate.value     = backendToInputDate(currentMois);
+  inputPayeur.value   = "Pauline";
+  isFacture.checked   = true;
+  formTitle.textContent    = "Nouvelle dépense";
+  btnSubmit.textContent    = "Ajouter";
   btnAnnuler.style.display = "none";
 
   inputMontant.focus();
@@ -1011,7 +993,7 @@ btnEclair.addEventListener("click", () => {
 filtreMois.addEventListener("change", () => {
   const val = filtreMois.value;
   if (val) {
-    currentMois = inputToBackendDate(val);
+    currentMois     = inputToBackendDate(val);
     inputDate.value = val;
     chargerDonnees(false);
   }

@@ -966,17 +966,16 @@ btnVirementFait.addEventListener("click", async () => {
 
   setLoading(true);
 
-  // On filtre en cherchant la date soit en index 4 (colonne E) soit 5 (colonne F)
+  // Filtrage ultra-précis
   const depMois = allData.filter(row => {
     const r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-    // On essaie r[4] sinon r[5]
-    const dateLue = r[4] || r[5] || ""; 
-    console.log("Analyse ligne date :", dateLue, "Normalisée :", normaliserDate(dateLue));
-    return normaliserDate(dateLue) === currentMois;
+    // r[4] est ta colonne E (Date)
+    const dateLue = r[4] ? String(r[4]).trim() : "";
+    return dateLue !== "" && normaliserDate(dateLue) === currentMois;
   });
 
   if (depMois.length === 0) {
-    alert("Aucune dépense trouvée pour le mois " + currentMois + ". Dates trouvées dans le sheet : " + allData.map(r => (r[4] || r[5])).join(", "));
+    alert("Aucune dépense valide trouvée pour le mois " + currentMois + ". Vérifie tes dates en colonne E.");
     setLoading(false);
     return;
   }
@@ -984,29 +983,30 @@ btnVirementFait.addEventListener("click", async () => {
   try {
     for (const row of depMois) {
       let r = Array.isArray(row) ? row : (row.valeurs || row.data || row.values || []);
-      // On envoie la mise à jour
+      
       await apiCall({
         action: "updateData",
         id: r[0],
         titre: r[1],
         montant: parseFloat(r[2]),
         payeur: r[3],
-        date: r[4] || r[5],
+        date: r[4], 
         noSplit: r[6] || "Non",
         statut: `Virement fait le ${dateJour()}`
       });
     }
 
     showToast("Virement enregistré !", "success");
-    await chargerDonnees(false);
-    rafraichirVue();
+    await chargerDonnees(true); // Recharge les données depuis le serveur
+    rafraichirVue(); // Rafraîchit l'affichage
 
   } catch (e) {
-    alert("Erreur : " + e.message);
+    alert("Erreur critique : " + e.message);
   } finally {
     setLoading(false);
   }
 });
+
 btnEclair.addEventListener("click", () => {
   editId.value    = "";
   editStatut.value= "En attente";

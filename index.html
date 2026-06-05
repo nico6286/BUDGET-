@@ -953,16 +953,20 @@ async function supprimerDepense(id) {
   }
 }
 btnVirementFait.addEventListener("click", async () => {
+  console.log("Contenu de allData :", allData);
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
   setLoading(true);
 
-  // Filtrage robuste
-  const depMois = allData.filter(row => {
-    // row est maintenant un simple tableau [id, titre, montant, payeur, date, statut, noSplit]
-    const dateVal = row[4] ? String(row[4]).trim() : "";
-    return dateVal !== "" && normaliserDate(dateVal) === currentMois;
-  });
+// Utilise cette version du filtre
+const depMois = allData.filter(row => {
+  if (!row[4]) return false; // row[4] est la date
+  
+  // Convertit la cellule en texte et vérifie si elle contient le mois
+  // On compare en ignorant le format exact
+  const dateCellule = String(row[4]); 
+  return dateCellule.includes("01/2026") || dateCellule.includes("2026-01");
+});
 
   if (depMois.length === 0) {
     alert("Aucune donnée trouvée pour le mois " + currentMois);

@@ -1,5 +1,5 @@
 /* ── Budget Couple — Service Worker ── */
-const CACHE_NAME = "budget-couple-v8"; // Changé en v8 pour forcer le nettoyage de l'ancien index.html buggé
+const CACHE_NAME = "budget-couple-v9"; // Changé en v9 pour forcer le nettoyage de l'ancien index.html buggé
 const ASSETS = ["./index.html", "./manifest.json"];
 
 self.addEventListener("install", e => {

@@ -80,17 +80,18 @@
     .nav-mois {
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 4px;
       background: var(--card2);
       border: 1px solid var(--border);
       border-radius: var(--radius-sm);
       padding: 4px 6px;
+      position: relative;
     }
     .nav-arrow {
       background: none;
       border: none;
       color: var(--violet);
-      font-size: 1.1rem;
+      font-size: 1.2rem;
       cursor: pointer;
       padding: 4px 8px;
       border-radius: 6px;
@@ -98,18 +99,99 @@
       line-height: 1;
     }
     .nav-arrow:active { background: rgba(157,123,255,.15); }
-    #filtreMois {
-      background: transparent;
+
+    /* Bouton mois cliquable */
+    #btnMoisLabel {
+      background: none;
       border: none;
-      outline: none;
       color: var(--cyan);
       font-family: var(--mono);
       font-size: .9rem;
-      font-weight: 500;
-      width: 64px;
+      font-weight: 600;
+      cursor: pointer;
+      padding: 4px 6px;
+      border-radius: 6px;
+      min-width: 80px;
       text-align: center;
-      caret-color: var(--violet);
+      transition: background .15s;
+      white-space: nowrap;
     }
+    #btnMoisLabel:active { background: rgba(61,217,197,.1); }
+
+    /* Input caché (pour compatibilité) */
+    #filtreMois { display: none; }
+
+    /* ── PICKER OVERLAY ── */
+    #monthPicker {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 70px;
+    }
+    #monthPicker.open { display: flex; }
+    .picker-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.6);
+      backdrop-filter: blur(3px);
+    }
+    .picker-box {
+      position: relative;
+      z-index: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      width: min(340px, 92vw);
+      box-shadow: var(--shadow);
+    }
+    .picker-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .picker-year-nav {
+      background: none;
+      border: none;
+      color: var(--violet);
+      font-size: 1.3rem;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 6px;
+      transition: background .15s;
+    }
+    .picker-year-nav:active { background: rgba(157,123,255,.15); }
+    #pickerYear {
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: #fff;
+      min-width: 60px;
+      text-align: center;
+    }
+    .picker-months {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .picker-month-btn {
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      font-family: var(--font);
+      font-size: .88rem;
+      padding: 10px 6px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s, color .15s;
+      text-align: center;
+    }
+    .picker-month-btn:hover   { border-color: var(--violet); color: var(--violet); }
+    .picker-month-btn.actif   { background: var(--violet); border-color: var(--violet); color: #fff; font-weight: 600; }
+    .picker-month-btn:active  { opacity: .8; }
 
     /* Balance label avec mois */
 
@@ -524,7 +606,8 @@
     <div class="logo">Budget <span>Couple</span></div>
     <div class="nav-mois">
       <button class="nav-arrow" id="btnMoisPrev" title="Mois précédent">‹</button>
-      <input type="text" id="filtreMois" maxlength="7" placeholder="MM/AAAA" autocomplete="off" spellcheck="false" inputmode="numeric" />
+      <button id="btnMoisLabel">—</button>
+      <input type="text" id="filtreMois" maxlength="7" autocomplete="off" />
       <button class="nav-arrow" id="btnMoisNext" title="Mois suivant">›</button>
     </div>
   </div>
@@ -598,6 +681,19 @@
   <div id="listeDepenses"></div>
 
 </main>
+
+<!-- Month Picker -->
+<div id="monthPicker">
+  <div class="picker-backdrop" id="pickerBackdrop"></div>
+  <div class="picker-box">
+    <div class="picker-header">
+      <button class="picker-year-nav" id="pickerYearPrev">‹</button>
+      <div id="pickerYear">2026</div>
+      <button class="picker-year-nav" id="pickerYearNext">›</button>
+    </div>
+    <div class="picker-months" id="pickerMonths"></div>
+  </div>
+</div>
 
 <script>
 "use strict";
@@ -828,8 +924,10 @@ function rowVals(row) {
 function rafraichirVue() {
   const mois = currentMois;
 
-  // Mettre à jour le label balance avec le mois lisible
+  // Mettre à jour le label balance et le bouton mois
   if (balanceLabel) balanceLabel.textContent = `Équilibre · ${moisVersLabel(mois)}`;
+  const lbl = document.getElementById("btnMoisLabel");
+  if (lbl) lbl.textContent = moisVersLabel(mois);
   filtreMois.value = mois;
 
   // Filtrer les dépenses du mois
@@ -1112,7 +1210,60 @@ btnEclair.addEventListener("click", () => {
 });
 
 /* ── FILTRE MOIS ─────────────────────────────────── */
-/* ── NAVIGATION FLÈCHES MOIS ─────────────────────── */
+/* ── NAVIGATION FLÈCHES + PICKER MOIS ───────────── */
+const btnMoisLabel  = document.getElementById("btnMoisLabel");
+const monthPicker   = document.getElementById("monthPicker");
+const pickerBackdrop= document.getElementById("pickerBackdrop");
+const pickerYear    = document.getElementById("pickerYear");
+const pickerMonths  = document.getElementById("pickerMonths");
+const pickerYearPrev= document.getElementById("pickerYearPrev");
+const pickerYearNext= document.getElementById("pickerYearNext");
+
+let pickerAnnee = new Date().getFullYear();
+
+const MOIS_COURTS = ["Jan","Fév","Mar","Avr","Mai","Jun",
+                     "Juil","Aoû","Sep","Oct","Nov","Déc"];
+
+function ouvrirPicker() {
+  // Initialiser l'année sur le mois courant
+  if (/^\d{2}\/\d{4}$/.test(currentMois)) {
+    pickerAnnee = parseInt(currentMois.split("/")[1]);
+  }
+  renderPicker();
+  monthPicker.classList.add("open");
+}
+
+function fermerPicker() {
+  monthPicker.classList.remove("open");
+}
+
+function renderPicker() {
+  pickerYear.textContent = pickerAnnee;
+  const [mmCur, yyyyCur] = /^\d{2}\/\d{4}$/.test(currentMois)
+    ? currentMois.split("/").map(Number)
+    : [0, 0];
+
+  pickerMonths.innerHTML = MOIS_COURTS.map((nom, i) => {
+    const actif = (i + 1 === mmCur && pickerAnnee === yyyyCur) ? "actif" : "";
+    return `<button class="picker-month-btn ${actif}" data-m="${i+1}">${nom}</button>`;
+  }).join("");
+
+  pickerMonths.querySelectorAll(".picker-month-btn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const mm = String(btn.dataset.m).padStart(2, "0");
+      currentMois = `${mm}/${pickerAnnee}`;
+      inputDate.value = currentMois;
+      fermerPicker();
+      chargerDonnees(false);
+    });
+  });
+}
+
+btnMoisLabel.addEventListener("click", ouvrirPicker);
+pickerBackdrop.addEventListener("click", fermerPicker);
+pickerYearPrev.addEventListener("click", () => { pickerAnnee--; renderPicker(); });
+pickerYearNext.addEventListener("click", () => { pickerAnnee++; renderPicker(); });
+
 btnMoisPrev.addEventListener("click", () => {
   currentMois = decalerMois(currentMois, -1);
   inputDate.value = currentMois;

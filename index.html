@@ -811,6 +811,8 @@ function rafraichirVue() {
     const montant = parseFloat(r[2]) || 0;
     const payeur  = String(r[3] || "");
 
+    console.log(`   statut brut: "${statut}" | startsWith: ${statut.startsWith("Virement fait le")}`);
+
     if (statut.startsWith("Virement fait le")) {
       estRegle = true;
       dateReglmt = statut.replace("Virement fait le ", "").trim();

@@ -641,6 +641,20 @@ function dateJour() {
   return `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")}/${d.getFullYear()}`;
 }
 
+// Retourne "DD/MM/AAAA" : le dernier jour du mois filtré
+// sauf si c'est le mois en cours → date du jour
+function datePourVirement(moisFiltreMMAAAA) {
+  if (!moisFiltreMMAAAA || !/^\d{2}\/\d{4}$/.test(moisFiltreMMAAAA)) return dateJour();
+  const [mm, yyyy] = moisFiltreMMAAAA.split("/").map(Number);
+  const now = new Date();
+  const moisActuelStr = `${String(now.getMonth()+1).padStart(2,"0")}/${now.getFullYear()}`;
+  // Si c'est le mois en cours → date du jour
+  if (moisFiltreMMAAAA === moisActuelStr) return dateJour();
+  // Sinon → dernier jour du mois filtré
+  const dernierJour = new Date(yyyy, mm, 0); // jour 0 du mois suivant = dernier jour du mois
+  return `${String(dernierJour.getDate()).padStart(2,"0")}/${String(mm).padStart(2,"0")}/${yyyy}`;
+}
+
 function genId() {
   return "id-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
 }
@@ -823,6 +837,15 @@ function rafraichirVue() {
     balanceBox.className = "equilibre";
     balanceText.textContent = "🎉 Parfait équilibre ! Rien à rembourser.";
     balanceAmount.style.display = "none";
+  } else if (estRegle) {
+    // Virement réglé : afficher en vert avec le montant
+    balanceBox.className = "equilibre";
+    balanceText.textContent = "✅ Virement effectué";
+    balanceAmount.style.display = "block";
+    if (detteNicolas > 0)
+      balanceAmount.textContent = `Nicolas → ${montantAbs} € → Pauline`;
+    else
+      balanceAmount.textContent = `Pauline → ${montantAbs} € → Nicolas`;
   } else if (detteNicolas > 0) {
     balanceBox.className = "virement";
     balanceText.textContent = "Virement dû :";
@@ -999,7 +1022,7 @@ async function supprimerDepense(id) {
 btnVirementFait.addEventListener("click", async () => {
   if (!confirm(`Marquer le virement du mois ${currentMois} comme effectué ?`)) return;
 
-  const statut = `Virement fait le ${dateJour()}`;
+  const statut = `Virement fait le ${datePourVirement(currentMois)}`;
   const depMois = allData.filter(row => String(rowVals(row)[4]) === currentMois);
 
   setLoading(true);

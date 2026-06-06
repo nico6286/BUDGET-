@@ -1,5 +1,5 @@
 /* ── Budget Couple — Service Worker ── */
-const CACHE_NAME = "budget-couple-v11";
+const CACHE_NAME = "budget-couple-v12";
 const ASSETS = ["./index.html", "./manifest.json"];
 
 self.addEventListener("install", e => {

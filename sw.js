@@ -1,5 +1,5 @@
 /* ── Budget Couple — Service Worker ── */
-const CACHE_NAME = "budget-couple-v9"; // Changé en v9 pour forcer le nettoyage de l'ancien index.html buggé
+const CACHE_NAME = "budget-couple-v10";
 const ASSETS = ["./index.html", "./manifest.json"];
 
 self.addEventListener("install", e => {
@@ -21,10 +21,7 @@ self.addEventListener("activate", e => {
 });
 
 self.addEventListener("fetch", e => {
-  // 1. IGNORER les requêtes non-HTTP/HTTPS (règle le bug des extensions "chrome-extension://")
-  if (!e.request.url.startsWith("http://") && !e.request.url.startsWith("https://")) return;
-
-  // 2. Ne jamais intercepter ni mettre en cache les appels vers Google Apps Script
+  // Ne jamais intercepter les appels vers Google Apps Script
   if (e.request.url.includes("script.google.com")) return;
 
   e.respondWith(
